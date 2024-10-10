@@ -8,11 +8,13 @@ volumes:
   pg_data:
   solr_data:
 
+
 services:
   ckan-dev:
     build:
       context: ckan/
       dockerfile: Dockerfile.dev
+    platform: linux/amd64
     env_file:
       - .env
     depends_on:
@@ -29,7 +31,7 @@ services:
       - ./src:/srv/app/src_extensions
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:${CKAN_PORT}"]
+      test: [ "CMD", "wget", "-qO", "/dev/null", "http://localhost:${CKAN_PORT}" ]
 
   postgres:
     build:
@@ -40,7 +42,7 @@ services:
       - pg_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}" ]
     ports:
       - "5432:5432"
 
@@ -51,7 +53,7 @@ services:
       - solr_data:/var/solr
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:8983/solr/"]
+      test: [ "CMD", "wget", "-qO", "/dev/null", "http://localhost:8983/solr/" ]
     ports:
       - "8983:8983"
 
@@ -59,4 +61,4 @@ services:
     image: redis:${REDIS_VERSION}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "-e", "QUIT"]
+      test: [ "CMD", "redis-cli", "-e", "QUIT" ]
