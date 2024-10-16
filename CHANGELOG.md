@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v1.3.3] - 2024-10-16
 
 ### Fixed
-* fix(language): Set fallback languageto English when Dutch for example is not available
+* fix(language): Set fallback language to English when Dutch for example is not available
 
 ## [v1.3.2] - 2024-10-14
 
