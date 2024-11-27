@@ -4,9 +4,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM docker.io/ckan/ckan-dev:2.10.5
+FROM ckan/ckan-dev:2.11.0
 
-RUN  pip3 install -e git+https://github.com/ckan/ckanext-dcat.git@v2.1.0#egg=ckanext-dcat && \
+RUN pip3 install -e git+https://github.com/ckan/ckanext-dcat.git@v2.1.0#egg=ckanext-dcat && \
     pip3 install -r ${APP_DIR}/src/ckanext-dcat/requirements.txt
 
 RUN pip3 install -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.0#egg=ckanext-harvest && \
@@ -14,8 +14,16 @@ RUN pip3 install -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.0#egg=c
 
 RUN pip3 install -e git+https://github.com/CivityNL/ckanext-scheming.git@release-3.0.0-civity#egg=ckanext-scheming[requirements]    
 
-RUN  pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.3.2#egg=ckanext-fairdatapoint && \
+RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.3.2#egg=ckanext-fairdatapoint && \
     pip3 install -r ${APP_DIR}/src/ckanext-fairdatapoint/requirements.txt
+
+# # Install cron and postgres client
+# cron is necessary for harvesting, postgres client for vocabulary seeding
+RUN \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update \
+    && apt-get install -y --no-install-recommends cron postgresql-client
 
 # Create log directories for CKAN harvester
 RUN mkdir -p /var/log/ckan/std && chown -R ckan:ckan /var/log/ckan
@@ -40,11 +48,14 @@ RUN for d in $APP_DIR/patches/*; do \
     fi ; \
     done
 
-ENV CKAN__PLUGINS="image_view text_view datatables_view envvars scheming_datasets scheming_organizations gdi_userportal dcat harvest ckan_harvester dcat_rdf_harvester dcat_json_harvester dcat_json_interface fairdatapointharvester activity"
+ENV CKAN__PLUGINS="envvars scheming_datasets scheming_organizations gdi_userportal dcat harvest dcat_rdf_harvester fairdatapointharvester activity"
 
 COPY  --chown=ckan:ckan setup/prerun.py ${APP_DIR}
 COPY  --chown=ckan:ckan setup/start_ckan_development.sh ${APP_DIR}
 
+# TODO
+# 1. Remove this command once the issue is fixed
+# https://github.com/ckan/ckan-docker-base/issues/41
 RUN mkdir -p /var/lib/ckan/storage/uploads/group && \
     mkdir -p /var/usr/ckan/storage/uploads/user && \
     chmod -R u+rwx "/var/lib/ckan"
