@@ -25,6 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [v1.3.7]
+
+### Security
+
+* chore(deps): update docker.io/ckan/ckan-dev docker tag to v2.10.6 by @LNDS-Sysadmins in https://github.com/GenomicDataInfrastructure/gdi-userportal-ckan-docker/pull/151
+* chore(deps): update docker.io/ckan/ckan-base docker tag to v2.10.6 by @LNDS-Sysadmins in https://github.com/GenomicDataInfrastructure/gdi-userportal-ckan-docker/pull/150
+
 ## [v1.3.3] - 2024-10-16
 
 ### Fixed
