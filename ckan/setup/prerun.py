@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 import os
+import pwd
 import sys
 import subprocess
 import psycopg2
@@ -25,6 +26,7 @@ RETRY = 5
 
 
 def update_plugins():
+
     plugins = os.environ.get("CKAN__PLUGINS", "")
     print(("[prerun] Setting the following plugins in {}:".format(ckan_ini)))
     print(plugins)
@@ -53,6 +55,7 @@ def check_main_db_connection(retry=None):
     conn_str = os.environ.get("CKAN_SQLALCHEMY_URL")
     if not conn_str:
         print("[prerun] CKAN_SQLALCHEMY_URL not defined, not checking db")
+        return
     return check_db_connection(conn_str, retry)
 
 
@@ -107,18 +110,18 @@ def check_solr_connection(retry=None):
 
 def init_db():
 
-    db_command = ["ckan", "-c", ckan_ini, "db", "init"]
+    db_command = ["ckan", "-c", ckan_ini, "db", "upgrade"]
     print("[prerun] Initializing or upgrading db - start")
     try:
         subprocess.check_output(db_command, stderr=subprocess.STDOUT)
         print("[prerun] Initializing or upgrading db - end")
     except subprocess.CalledProcessError as e:
-        if "OperationalError" in e.output:
-            print(e.output)
+        if "OperationalError" in str(e.output):
             print("[prerun] Database not ready, waiting a bit before exit...")
             time.sleep(5)
             sys.exit(1)
         else:
+            print(str(e))
             print(e.output)
             raise e
 
@@ -130,12 +133,13 @@ def init_db_harvest():
         subprocess.check_output(db_command, stderr=subprocess.STDOUT)
         print("[prerun] Initializing or upgrading harvest db - end")
     except subprocess.CalledProcessError as e:
-        if "OperationalError" in e.output:
+        if "OperationalError" in str(e.output):
             print(e.output)
             print("[prerun] Database not ready, waiting a bit before exit...")
             time.sleep(5)
             sys.exit(1)
         else:
+            print(str(e))
             print(e.output)
             raise e
 
@@ -176,6 +180,21 @@ def create_sysadmin():
 
         subprocess.call(command)
         print("[prerun] Made user {0} a sysadmin".format(name))
+
+        # cleanup permissions
+        # We're running as root before pivoting to uwsgi and dropping privs
+        data_dir = "%s/storage" % os.environ["CKAN_STORAGE_PATH"]
+
+        try:
+            user_name = "ckan-sys"
+            pwd.getpwnam(user_name)
+            command = ["chown", "-R", "ckan:ckan-sys", data_dir]
+        except KeyError:
+            user_name = "ckan"
+            command = ["chown", "-R", "ckan:ckan", data_dir]
+        subprocess.call(command)
+
+        print("[prerun] Ensured storage directory is owned by {}".format(user_name))
 
 
 if __name__ == "__main__":
