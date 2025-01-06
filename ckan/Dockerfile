@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM ckan/ckan-base:2.11.0
+FROM ckan/ckan-base:2.11.1
 
 RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.3.8#egg=ckanext-gdi-userportal && \
     pip3 install -r ${APP_DIR}/src/ckanext-gdi-userportal/requirements.txt
@@ -22,12 +22,8 @@ RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userpor
 
 # # Install cron and postgres client
 # cron is necessary for harvesting, postgres client for vocabulary seeding
-RUN \
-    --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends cron postgresql-client
-
 
 # Create log directories for CKAN harvester
 RUN mkdir -p /var/log/ckan/std && chown -R ckan:ckan /var/log/ckan
@@ -51,8 +47,6 @@ RUN for d in $APP_DIR/patches/*; do \
     done ; \
     fi ; \
     done
-
-ENV CKAN__PLUGINS="envvars scheming_datasets scheming_organizations dcat harvest ckan_harvester dcat_rdf_harvester fairdatapointharvester gdi_userportal activity"
 
 COPY  --chown=ckan:ckan setup/prerun.py ${APP_DIR}
 
