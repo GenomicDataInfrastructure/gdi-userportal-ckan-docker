@@ -6,9 +6,13 @@
 
 FROM ckan/ckan-dev:2.11.1
 
+USER root
+RUN mkdir /srv/app/.local && chown ckan /srv/app/.local
+USER ckan
+
 
 RUN pip3 install -e git+https://github.com/ckan/ckanext-dcat.git@v2.1.0#egg=ckanext-dcat && \
-     pip3 install -r ${APP_DIR}/src/ckanext-dcat/requirements.txt
+    pip3 install -r ${APP_DIR}/src/ckanext-dcat/requirements.txt
 
 RUN pip3 install -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.0#egg=ckanext-harvest && \
     pip3 install -r ${APP_DIR}/src/ckanext-harvest/requirements.txt
@@ -20,6 +24,7 @@ RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userpor
 
 USER root
 
+### Install everything we need for the harvester
 # Install cron 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
@@ -37,14 +42,10 @@ RUN mkdir -p /var/log/supervisor /etc/supervisor/conf.d && \
 COPY config/supervisord.conf /etc/supervisord.d/ckan.conf
 COPY config/crontab /etc/cron.d/ckan-cron
 
-# Ensure correct permissions for cron files
-RUN chmod 0644 /etc/cron.d/ckan-cron && \
-    crontab /etc/cron.d/ckan-cron && \
-    touch /var/log/cron.log && \
-    chmod 666 /var/log/cron.log
-
-RUN chown -R ckan-sys:ckan-sys /etc/profile.d && \
-    printenv | sed 's/^\(.*\)$/export \1/g' > /etc/profile.d/custom_env.sh
+# Running cron as non-root user
+RUN chmod gu+rw /var/run
+RUN chmod gu+s /usr/sbin/cron
+RUN crontab -u ckan /etc/cron.d/ckan-cron
 
 COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
