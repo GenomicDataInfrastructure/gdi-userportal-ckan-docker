@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2006-2024 Open Knowledge Foundation and contributors
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
 # Set debug to true
 echo "Enabling debug mode"
 ckan config-tool $CKAN_INI -s DEFAULT "debug = true"
