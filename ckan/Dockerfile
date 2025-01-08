@@ -28,27 +28,22 @@ RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userpor
 USER root
 
 ### Install everything we need for the harvester
-# Install cron 
+# Install cron and supervisor
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     supervisor \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create log directories for CKAN harvester
-RUN mkdir -p /var/log/ckan/std && chown -R ckan:ckan-sys /var/log/ckan
-
-# Create directories for Supervisor
-RUN mkdir -p /var/log/supervisor /etc/supervisor/conf.d && \
-    chown -R ckan:ckan-sys /var/log/supervisor /etc/supervisor/conf.d
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/log/ckan/std /var/log/supervisor /etc/supervisor/conf.d \
+    && chown -R ckan:ckan-sys /var/log/ckan /var/log/supervisor /etc/supervisor/conf.d
 
 # Config cron job for harvesting
 COPY config/supervisord.conf /etc/supervisord.d/ckan.conf
 COPY config/crontab /etc/cron.d/ckan-cron
 
-# Running cron as non-root user
-RUN chmod gu+rw /var/run
-RUN chmod gu+s /usr/sbin/cron
-RUN crontab -u ckan /etc/cron.d/ckan-cron
+# Running cron as non-root user and give permission to ckan user
+RUN chmod gu+rw /var/run && \
+    chmod gu+s /usr/sbin/cron && \
+    crontab -u ckan /etc/cron.d/ckan-cron
 
 COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
