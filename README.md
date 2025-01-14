@@ -61,7 +61,15 @@ docker compose logs -f
 ckan -c ckan.ini search-index rebuild
 ```
 
-## 4. installing new extensions
+## 4. Accessing the running instance
+
+The ckan instance runs on port defined in CKAN_PORT_HOST (5500). Access it at http://localhost:5500.  
+A sysadmin account is created by default with the following credentials (defined in .env):
+- `CKAN_SYSADMIN_NAME=ckan_admin`
+- `CKAN_SYSADMIN_PASSWORD=test1234`
+
+
+## 5. installing new extensions
 
 The current agreement is:
 * Fork all the branches from the extension's repo into [GitHub GDI](https://github.com/GenomicDataInfrastructure).
