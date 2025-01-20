@@ -42,18 +42,30 @@ CKAN and all the components are configured using environment variables that you 
 ## 3. Useful commands
 
 ### 3.1. Build and start dev environment
-```bash
-docker compose up -d --build
-```
+Use this mode if you are making code changes to CKAN and either creating new extensions or making code changes to existing extensions. This mode also uses the `.env` file for config options.
 
+To develop local extensions use the `docker-compose.yml` file with help from the scripts under `bin`:
+
+To build the images:
+```bash
+	bin/compose build
+```
+To install extensions from the `src` directory:
+```bash
+	bin/install_src
+```
+To start the containers:
+```bash
+	bin/compose up
+```
 ### 3.2. Remove images and volumes
 ```bash
-docker compose down -v
+  bin/compose down -v
 ```
 
 ### 3.3. Logs
 ```bash
-docker compose logs -f
+  bin/compose logs -f
 ```
 
 ### 3.4. Re-index SOLR
