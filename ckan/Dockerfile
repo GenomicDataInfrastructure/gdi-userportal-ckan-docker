@@ -47,7 +47,7 @@ RUN chmod gu+rw /var/run && \
 COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
 COPY --chown=ckan-sys:ckan-sys setup/prerun.py ${APP_DIR}
-COPY --chown=ckan-sys:ckan-sys setup/start_ckan_development.sh ${APP_DIR}
+COPY --chown=ckan-sys:ckan-sys setup/start_ckan.sh ${APP_DIR}
 
 USER ckan
 

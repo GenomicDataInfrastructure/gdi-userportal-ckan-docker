@@ -107,7 +107,7 @@ def check_solr_connection(retry=None):
 
 def init_db():
 
-    db_command = ["ckan", "-c", ckan_ini, "db", "init"]
+    db_command = ["ckan", "-c", ckan_ini, "db", "upgrade"]
     print("[prerun] Initializing or upgrading db - start")
     try:
         subprocess.check_output(db_command, stderr=subprocess.STDOUT)
@@ -193,10 +193,10 @@ if __name__ == "__main__":
     if maintenance:
         print("[prerun] Maintenance mode, skipping setup...")
     else:
-        check_main_db_connection()
-        init_db()
         update_plugins()
         update_database()
+        check_main_db_connection()
+        init_db()
         init_db_harvest()
         check_solr_connection()
         create_sysadmin()
