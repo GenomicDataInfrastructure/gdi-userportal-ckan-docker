@@ -7,4 +7,4 @@
 set -e
 ROOT="$(dirname ${BASH_SOURCE[0]})/.."
 
-docker compose -f "${ROOT}/docker-compose.yml" "$@"
+docker compose -f "${ROOT}/docker-compose.yml" restart ckan-dev

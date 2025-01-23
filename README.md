@@ -58,6 +58,11 @@ To start the containers:
 ```bash
 	bin/compose up
 ```
+Shut down and restart the whole ckan-dev container (use bin/compose up -d instead to reload new values from .env)
+```bash
+	bin/compose restart
+```
+
 ### 3.2. Remove images and volumes
 ```bash
   bin/compose down -v
