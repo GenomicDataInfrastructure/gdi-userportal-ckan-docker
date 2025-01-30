@@ -20,6 +20,8 @@ then
     JWT_SECRET=$(python3 -c 'import secrets; print("string:" + secrets.token_urlsafe())')
     ckan config-tool $CKAN_INI "api_token.jwt.encode.secret=${JWT_SECRET}"
     ckan config-tool $CKAN_INI "api_token.jwt.decode.secret=${JWT_SECRET}"
+    ckan config-tool $CKAN_INI "ckan.harvest.s3_rdf.aws_access_key=${CKAN_HARVEST_S3_RDF_AWS_ACCESS_KEY}"
+    ckan config-tool $CKAN_INI "ckan.harvest.s3_rdf.aws_secret_key=${CKAN_HARVEST_S3_RDF_AWS_SECRET_KEY}"
 fi
 
 # Run the prerun script to init CKAN and create the default admin user
