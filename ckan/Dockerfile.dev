@@ -4,51 +4,59 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM docker.io/ckan/ckan-dev:2.10.6
+FROM ckan/ckan-dev:2.11.1
 
-RUN  pip3 install -e git+https://github.com/ckan/ckanext-dcat.git@v2.1.0#egg=ckanext-dcat && \
+USER root
+RUN chown -R ckan:ckan-sys ${APP_DIR}
+USER ckan
+
+
+RUN pip3 install -e git+https://github.com/ckan/ckanext-dcat.git@v2.2.0#egg=ckanext-dcat && \
     pip3 install -r ${APP_DIR}/src/ckanext-dcat/requirements.txt
 
 RUN pip3 install -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.0#egg=ckanext-harvest && \
     pip3 install -r ${APP_DIR}/src/ckanext-harvest/requirements.txt
 
-RUN pip3 install -e git+https://github.com/CivityNL/ckanext-scheming.git@release-3.0.0-civity#egg=ckanext-scheming[requirements]    
+RUN pip3 install -e git+https://github.com/CivityNL/ckanext-scheming.git@release-3.0.0-civity-1#egg=ckanext-scheming[requirements]    
 
-RUN  pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.3.2#egg=ckanext-fairdatapoint && \
+RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.3.2#egg=ckanext-fairdatapoint && \
     pip3 install -r ${APP_DIR}/src/ckanext-fairdatapoint/requirements.txt
 
-# Create log directories for CKAN harvester
-RUN mkdir -p /var/log/ckan/std && chown -R ckan:ckan /var/log/ckan
+USER root
 
-# Copy custom initialization scripts
-COPY docker-entrypoint.d/* /docker-entrypoint.d/
+### Install everything we need for the harvester
+# Install cron and supervisor
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cron \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/log/ckan/std /var/log/supervisor /etc/supervisor/conf.d \
+    && chown -R ckan:ckan-sys /var/log/ckan /var/log/supervisor /etc/supervisor/conf.d
 
 # Config cron job for harvesting
 COPY config/supervisord.conf /etc/supervisord.d/ckan.conf
-COPY config/crontab ${APP_DIR}/crontab
-RUN crontab ${APP_DIR}/crontab
+COPY config/crontab /etc/cron.d/ckan-cron
 
-# Apply any patches needed to CKAN core or any of the built extensions (not the
-# runtime mounted ones)
-COPY patches ${APP_DIR}/patches
+# Running cron as non-root user and give permission to ckan user
+RUN chmod gu+rw /var/run && \
+    chmod gu+s /usr/sbin/cron && \
+    crontab -u ckan /etc/cron.d/ckan-cron
+
+COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
+COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
+COPY --chown=ckan-sys:ckan-sys setup/prerun.py ${APP_DIR}
+COPY --chown=ckan-sys:ckan-sys setup/start_ckan_development.sh ${APP_DIR}
+
+USER ckan
 
 RUN for d in $APP_DIR/patches/*; do \
-    if [ -d $d ]; then \
-    for f in `ls $d/*.patch | sort -g`; do \
-    cd $SRC_DIR/`basename "$d"` && echo "$0: Applying patch $f to $SRC_DIR/`basename $d`"; patch -p1 < "$f" ; \
-    done ; \
-    fi ; \
+        if [ -d $d ]; then \
+            for f in `ls $d/*.patch | sort -g`; do \
+                cd $SRC_DIR/`basename "$d"` && echo "$0: Applying patch $f to $SRC_DIR/`basename $d`"; patch -p1 < "$f" ; \
+            done ; \
+        fi ; \
     done
 
-ENV CKAN__PLUGINS="image_view text_view datatables_view envvars scheming_datasets scheming_organizations gdi_userportal dcat harvest ckan_harvester dcat_rdf_harvester dcat_json_harvester dcat_json_interface fairdatapointharvester activity"
 
-COPY  --chown=ckan:ckan setup/prerun.py ${APP_DIR}
-COPY  --chown=ckan:ckan setup/start_ckan_development.sh ${APP_DIR}
-
-RUN mkdir -p /var/lib/ckan/storage/uploads/group && \
-    mkdir -p /var/usr/ckan/storage/uploads/user && \
-    chmod -R u+rwx "/var/lib/ckan"
-
-# https://github.com/ckan/ckan-docker-base/issues/82
-# CVE-2024-32002 was found on git and related packages
-RUN apk del git git-perl perl-git
+    
+    

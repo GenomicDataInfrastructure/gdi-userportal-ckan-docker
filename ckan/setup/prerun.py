@@ -7,7 +7,6 @@ import os
 import sys
 import subprocess
 import psycopg2
-
 try:
     from urllib.request import urlopen
     from urllib.error import URLError
@@ -25,14 +24,15 @@ RETRY = 5
 
 
 def update_plugins():
+
     plugins = os.environ.get("CKAN__PLUGINS", "")
     print(("[prerun] Setting the following plugins in {}:".format(ckan_ini)))
     print(plugins)
     cmd = ["ckan", "config-tool", ckan_ini, "ckan.plugins = {}".format(plugins)]
     subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     print("[prerun] Plugins set.")
-
-
+    
+    
 def update_database():
 
     sqlalchemy_url = os.environ.get("CKAN_SQLALCHEMY_URL", "")
@@ -53,6 +53,7 @@ def check_main_db_connection(retry=None):
     conn_str = os.environ.get("CKAN_SQLALCHEMY_URL")
     if not conn_str:
         print("[prerun] CKAN_SQLALCHEMY_URL not defined, not checking db")
+        return
     return check_db_connection(conn_str, retry)
 
 
@@ -96,29 +97,28 @@ def check_solr_connection(retry=None):
         check_solr_connection(retry=retry - 1)
     else:
         import re
-
         conn_info = connection.read()
         schema_name = json.loads(conn_info)
-        if "ckan" in schema_name["name"]:
-            print("[prerun] Succesfully connected to solr and CKAN schema loaded")
+        if 'ckan' in schema_name['name']:
+            print('[prerun] Succesfully connected to solr and CKAN schema loaded')
         else:
-            print("[prerun] Succesfully connected to solr, but CKAN schema not found")
+            print('[prerun] Succesfully connected to solr, but CKAN schema not found')
 
 
 def init_db():
 
-    db_command = ["ckan", "-c", ckan_ini, "db", "init"]
+    db_command = ["ckan", "-c", ckan_ini, "db", "upgrade"]
     print("[prerun] Initializing or upgrading db - start")
     try:
         subprocess.check_output(db_command, stderr=subprocess.STDOUT)
         print("[prerun] Initializing or upgrading db - end")
     except subprocess.CalledProcessError as e:
-        if "OperationalError" in e.output:
-            print(e.output)
+        if "OperationalError" in str(e.output):
             print("[prerun] Database not ready, waiting a bit before exit...")
             time.sleep(5)
             sys.exit(1)
         else:
+            print(str(e))
             print(e.output)
             raise e
 
@@ -130,12 +130,13 @@ def init_db_harvest():
         subprocess.check_output(db_command, stderr=subprocess.STDOUT)
         print("[prerun] Initializing or upgrading harvest db - end")
     except subprocess.CalledProcessError as e:
-        if "OperationalError" in e.output:
+        if "OperationalError" in str(e.output):
             print(e.output)
             print("[prerun] Database not ready, waiting a bit before exit...")
             time.sleep(5)
             sys.exit(1)
         else:
+            print(str(e))
             print(e.output)
             raise e
 
@@ -177,6 +178,13 @@ def create_sysadmin():
         subprocess.call(command)
         print("[prerun] Made user {0} a sysadmin".format(name))
 
+        # cleanup permissions
+        # We're running as root before pivoting to uwsgi and dropping privs
+        data_dir = "%s/storage" % os.environ['CKAN_STORAGE_PATH']
+
+        command = ["chown", "-R", "ckan:ckan-sys", data_dir]
+        subprocess.call(command)
+        print("[prerun] Ensured storage directory is owned by ckan")
 
 if __name__ == "__main__":
 
