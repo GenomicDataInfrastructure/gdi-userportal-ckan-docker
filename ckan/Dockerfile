@@ -13,6 +13,9 @@ USER ckan
 RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.3.10#egg=ckanext-gdi-userportal && \
     pip3 install -r ${APP_DIR}/src/ckanext-gdi-userportal/requirements.txt
 
+RUN pip3 install -e git+https://github.com/ckan/ckanext-dataset-series.git@main#egg=ckanext-dataset-series && \
+    pip3 install -r ${APP_DIR}/src/ckanext-dataset-series/requirements.txt
+
 RUN pip3 install -e git+https://github.com/ckan/ckanext-dcat.git@v2.2.0#egg=ckanext-dcat && \
     pip3 install -r ${APP_DIR}/src/ckanext-dcat/requirements.txt
 
