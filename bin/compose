@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# SPDX-FileCopyrightText: Stichting Health-RI
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+set -e
+ROOT="$(dirname ${BASH_SOURCE[0]})/.."
+
+docker compose -f "${ROOT}/docker-compose.yml" "$@"

@@ -42,18 +42,35 @@ CKAN and all the components are configured using environment variables that you 
 ## 3. Useful commands
 
 ### 3.1. Build and start dev environment
+Use this mode if you are making code changes to CKAN and either creating new extensions or making code changes to existing extensions. This mode also uses the `.env` file for config options.
+
+To develop local extensions use the `docker-compose.yml` file with help from the scripts under `bin`:
+
+To build the images:
 ```bash
-docker compose up -d --build
+	bin/compose build
+```
+To install extensions from the `src` directory:
+```bash
+	bin/install_src
+```
+To start the containers:
+```bash
+	bin/compose up
+```
+Shut down and restart the whole ckan-dev container (use bin/compose up -d instead to reload new values from .env)
+```bash
+	bin/compose restart
 ```
 
 ### 3.2. Remove images and volumes
 ```bash
-docker compose down -v
+  bin/compose down -v
 ```
 
 ### 3.3. Logs
 ```bash
-docker compose logs -f
+  bin/compose logs -f
 ```
 
 ### 3.4. Re-index SOLR
@@ -61,7 +78,15 @@ docker compose logs -f
 ckan -c ckan.ini search-index rebuild
 ```
 
-## 4. installing new extensions
+## 4. Accessing the running instance
+
+The ckan instance runs on port defined in CKAN_PORT_HOST (5500). Access it at http://localhost:5500.  
+A sysadmin account is created by default with the following credentials (defined in .env):
+- `CKAN_SYSADMIN_NAME=ckan_admin`
+- `CKAN_SYSADMIN_PASSWORD=test1234`
+
+
+## 5. installing new extensions
 
 The current agreement is:
 * Fork all the branches from the extension's repo into [GitHub GDI](https://github.com/GenomicDataInfrastructure).
