@@ -13,9 +13,6 @@ USER ckan
 RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.3.11#egg=ckanext-gdi-userportal && \
     pip3 install -r ${APP_DIR}/src/ckanext-gdi-userportal/requirements.txt
 
-RUN pip3 install -e git+https://github.com/ckan/ckanext-dataset-series.git@main#egg=ckanext-dataset-series && \
-    pip3 install -r ${APP_DIR}/src/ckanext-dataset-series/requirements.txt
-
 RUN pip3 install -e git+https://github.com/ckan/ckanext-dcat.git@v2.2.0#egg=ckanext-dcat && \
     pip3 install -r ${APP_DIR}/src/ckanext-dcat/requirements.txt
 
@@ -24,7 +21,7 @@ RUN pip3 install -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.0#egg=c
 
 RUN pip3 install -e git+https://github.com/CivityNL/ckanext-scheming.git@release-3.0.0-civity-1#egg=ckanext-scheming[requirements]
 
-RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.3.2#egg=ckanext-fairdatapoint && \
+RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.3.3#egg=ckanext-fairdatapoint && \
     pip3 install -r ${APP_DIR}/src/ckanext-fairdatapoint/requirements.txt
 
 USER root
