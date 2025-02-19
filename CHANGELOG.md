@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [v1.3.10] - 2025-02-19
+
+### Added
+* chore(healthdcat): update to fairdatapoint extension tot v1.3.3 to enable support for HealthDCAT  
+
+
 ## [v1.3.3] - 2024-10-16
 
 ### Fixed
