@@ -27,7 +27,7 @@ RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userpor
 USER root
 
 ### Install everything we need for the harvester
-# Install cron and supervisor
+# Install cron and supervisor. 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     supervisor \
@@ -58,3 +58,10 @@ RUN for d in $APP_DIR/patches/*; do \
             done ; \
         fi ; \
     done
+
+# Wget can be removed when https://github.com/ckan/ckan-docker-base/issues/110 is resolved
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    wget \
+    && apt-get upgrade -y wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Wget installation is complete."
