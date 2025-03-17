@@ -47,6 +47,12 @@ COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
 COPY --chown=ckan-sys:ckan-sys setup/prerun.py ${APP_DIR}
 COPY --chown=ckan-sys:ckan-sys setup/start_ckan_development.sh ${APP_DIR}
 
+# Wget install can be removed when https://github.com/ckan/ckan-docker-base/issues/110 is resolved
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "Wget installation is complete."
+
 USER ckan
 
 RUN for d in $APP_DIR/patches/*; do \
@@ -56,9 +62,3 @@ RUN for d in $APP_DIR/patches/*; do \
             done ; \
         fi ; \
     done
-
-# Wget install can be removed when https://github.com/ckan/ckan-docker-base/issues/110 is resolved
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    wget \
-    && rm -rf /var/lib/apt/lists/* \
-    && echo "Wget installation is complete."
