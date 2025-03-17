@@ -60,6 +60,5 @@ RUN for d in $APP_DIR/patches/*; do \
 # Wget install can be removed when https://github.com/ckan/ckan-docker-base/issues/110 is resolved
 RUN apt-get update && apt-get install --no-install-recommends -y \
     wget \
-    && apt-get upgrade -y wget \
     && rm -rf /var/lib/apt/lists/* \
     && echo "Wget installation is complete."
