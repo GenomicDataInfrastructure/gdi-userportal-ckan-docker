@@ -5,9 +5,12 @@
 name: Publish release
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version increment (major, minor, patch)'
+        required: true
+        default: 'patch'
 
 env:
   REGISTRY: ghcr.io
@@ -26,9 +29,143 @@ jobs:
           fail-on: "issues"
           run: "cache-dependencies,cache-scan-results,labels,analyzer,evaluator,advisor,reporter,upload-results"
 
-  build-and-push-image:
+  versioning:
     runs-on: ubuntu-latest
     needs: ort
+    outputs:
+      new_tag: ${{ steps.tagging.outputs.new_tag }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Git User Identity
+        run: |
+          git config --local user.email "lnds-Sysadmins@users.noreply.github.com"
+          git config --local user.name "LNDS-Sysadmins"
+
+      - name: Fetch Latest Tag and Increment Version
+        id: tagging
+        run: |
+          LATEST_TAG=$(git tag --sort=-creatordate | head -n 1)
+          echo "Latest tag: $LATEST_TAG"
+          
+          # Extract Major, Minor, Patch
+          IFS='.' read -r MAJOR MINOR PATCH <<<"${LATEST_TAG//v/}"
+          INCREMENT=${{ github.event.inputs.version }}
+          echo "Updating : $INCREMENT version"
+          
+          case "$INCREMENT" in
+            major) ((MAJOR++)); MINOR=0; PATCH=0 ;;
+            minor) ((MINOR++)); PATCH=0 ;;
+            patch|*) ((PATCH++)) ;;
+          esac
+
+          NEW_TAG="v$MAJOR.$MINOR.$PATCH"
+          echo "Pushing this tag: $NEW_TAG"
+          
+          git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
+          git push origin "$NEW_TAG"
+
+          echo "New tag pushed: $NEW_TAG"
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+  generate-changelog:
+    runs-on: ubuntu-latest
+    needs: versioning
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Git User Identity
+        run: |
+          git config --local user.email "lnds-Sysadmins@users.noreply.github.com"
+          git config --local user.name "LNDS-Sysadmins"
+
+      - name: Fetch and sync all tags
+        run: |
+          git fetch --prune origin "+refs/tags/*:refs/tags/*"
+          git tag --sort=-creatordate
+
+      - name: Generate changelog entry
+        run: |
+          CHANGELOG_FILE="CHANGELOG.md"
+          LATEST_TAG=$(git tag --sort=-creatordate | sed -n '1p')
+          PREVIOUS_TAG=$(git tag --sort=-creatordate | sed -n '2p')
+          
+          echo "📢 Generating changelog for $LATEST_TAG (since $PREVIOUS_TAG)..."
+          
+          COMMITS=$(git log "$PREVIOUS_TAG".."$LATEST_TAG" --no-merges --pretty=format:"%s by @%an in %h")
+          
+          if [[ -z "$COMMITS" ]]; then
+            echo "⚠️ No commits found between $PREVIOUS_TAG and $LATEST_TAG"
+            exit 0
+          fi
+          
+          ADDED=""; CHANGED=""; FIXED=""; REMOVED=""; SECURITY=""
+          while IFS= read -r line; do
+            case "$line" in
+              *feat*|*implement*) ADDED+="- $line\n" ;;
+              *fix*|*bug*|*resolve*|*patch*) FIXED+="- $line\n" ;;
+              *update*|*modify*|*change*|*refactor*|*chore*) CHANGED+="- $line\n" ;;
+              *decommission*|*delete*|*remove*) REMOVED+="- $line\n" ;;
+              *security*|*vuln*|*"patch security"*) SECURITY+="- $line\n" ;;
+              *) CHANGED+="- $line\n" ;;
+            esac
+          done <<< "$COMMITS"
+          touch temp_changelog.md          
+          {
+            echo -e "## [$LATEST_TAG] - $(date +'%Y-%m-%d')\n"
+            [[ -n "$ADDED" ]] && echo -e "### Added\n$ADDED\n"
+            [[ -n "$CHANGED" ]] && echo -e "### Changed\n$CHANGED\n"
+            [[ -n "$FIXED" ]] && echo -e "### Fixed\n$FIXED\n"
+            [[ -n "$REMOVED" ]] && echo -e "### Removed\n$REMOVED\n"
+            [[ -n "$SECURITY" ]] && echo -e "### Security\n$SECURITY\n"
+          } > temp_changelog.md
+          
+          if [[ ! -f "$CHANGELOG_FILE" ]]; then
+            echo -e "# Changelog\n\nAll notable changes to this project will be documented here.\n" > "$CHANGELOG_FILE"
+          fi
+          
+          sed -i '14r temp_changelog.md' "$CHANGELOG_FILE"
+          rm temp_changelog.md
+          
+          git add "$CHANGELOG_FILE"
+          git commit -m "📜 Update CHANGELOG.md for $LATEST_TAG" || echo "No changes to commit"
+          git push origin main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-release:
+    runs-on: ubuntu-latest
+    needs: [versioning, generate-changelog]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install -y gh
+
+      - name: Generate and Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_TAG="${{ needs.versioning.outputs.new_tag }}"
+          PREVIOUS_TAG=$(git tag --sort=-creatordate | sed -n '2p')
+
+          echo "Creating GitHub release for $LATEST_TAG from previous release $PREVIOUS_TAG"
+          
+          gh release create "$LATEST_TAG" \
+            --title "Release $LATEST_TAG" \
+            --generate-notes \
+            --notes-start-tag "$PREVIOUS_TAG"
+
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    needs: publish-release
     permissions:
       contents: read
       packages: write
