@@ -78,6 +78,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          token: '${{ secrets.LNDS_SYSADMINS_TOKEN }}'
           fetch-depth: 0
 
       - name: Set Git User Identity
@@ -134,10 +135,8 @@ jobs:
           rm temp_changelog.md
           
           git add "$CHANGELOG_FILE"
-          git commit -m "📜 Update CHANGELOG.md for $LATEST_TAG" || echo "No changes to commit"
+          git commit -m "doc: Update CHANGELOG.md for $LATEST_TAG" || echo "No changes to commit"
           git push origin main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-release:
     runs-on: ubuntu-latest
