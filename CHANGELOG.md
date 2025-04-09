@@ -11,19 +11,110 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
 
-### Added
+## [v1.3.12] - 2025-04-04
 
 ### Changed
+- Onlky focus HealthDCAT by @Hans-Chrstian in 36e9479
+- Only focus HealthDCAP AP by @Hans-Chrstian in 66d4e17
+- Initial commit of Health DCAT FDP support + Dataseries support by @Hans-Chrstian in f1a76a3
 
-### Deprecated
 
-### Removed
+
+## [v1.3.9] - 2025-04-04
+
+### Changed
+- chore(deps): update ckan/ckan-dev docker tag to v2.11.2 by @Renovate Bot in 1e9057a
+- chore(deps): update ckan/ckan-base docker tag to v2.11.2 by @Renovate Bot in caaf560
+
+
+
+## [v1.3.8] - 2025-04-04
+
+### Changed
+- chore(deps): upgrade ckanext-gdi-userportal by @Bruno Pacheco in ceedbf2
+- chore: update secrets in ckan.ini by @jadz94 in 3793540
+- chore: addd s3harvester by @jadz94 in 2c98ec2
+- chore: update dockerfile by @jadz94 in 3edeff9
+- chore: upgrade extension version by @jadz94 in 6d54700
+- Revert "chore: upgrade extension version" by @jadz94 in 1408099
+- chore: upgrade extension version by @jadz94 in 43dfb12
+- Ckan 211 (#158) by @Hans-Christian in 4089575
+- chore: upgrade extension version by @jadz94 in 8a4e6f7
+- Applied review comments by @Hans-Chrstian in 34b259f
+- docs(README): add local ckan instance hostname and default sysadmin credentials by @Antoine Dorard in 08a7f5e
+- Sonarcloud recomendations by @Hans-Chrstian in b3eca9b
+- Revert x64 by @Hans-Chrstian in 96bc753
+- Correct readme by @Hans-Chrstian in 57f3c3d
+- Add license by @Hans-Chrstian in 7216518
+- Adjust dockerfile by @Hans-Chrstian in fd38196
+- Current status of 2.11.1 upgrade by @Hans-Chrstian in 0cd04b8
+- chore: improve logs of database upgrades by @Bruno Pacheco in 3e85f54
+- Clarify and clean up Dockerfile by @Mark Janse in 0a3e002
+- Explicitly add linux/amd64 platform to docker as there are no other images by @Mark Janse in fadd140
+- chore(deps): update dependencies and settings for CKAN 2.11 compatibility by @Mark Janse in d4a5e0c
+
 
 ### Fixed
+- fix(ART-12367): update dcat ext version by @jadz94 in 452363d
+- fix(reuse): Add reuse header to scripts by @Hans-Chrstian in 729a425
+- fix(redis): remove unnecessary redis password  in environment file by @Hans-Chrstian in 8a75cc1
+- fix: resolve startup issues with supervisor and harvester configuration by @Hans-Chrstian in ee4ca92
+- fix Civity reference to scheming by @Hans-Chrstian in 906b52f
+- fix permission issues by @Hans-Chrstian in db58059
 
-### Security
+
+
+## [v1.3.7] - 2025-04-04
+
+### Changed
+- chore(deps): upgrade CKAN to 2.10.6 by @Bruno Pacheco in 34713e6
+- chore(deps): revert CKAN upgrade by @Bruno Pacheco in be2c5a8
+- chore(deps): update docker.io/ckan/ckan-dev docker tag to v2.10.6 by @Renovate Bot in 05c35a5
+- chore(deps): update docker.io/ckan/ckan-base docker tag to v2.10.6 by @Renovate Bot in 516ec09
+
+
+
+## [v1.3.6] - 2025-04-04
+
+### Changed
+- FDP 1.3.2 by @Hans-Chrstian in 316fbc3
+- Fix FDP by @Hans-Chrstian in d78701d
+- chore: initialize harvest db by @Bruno Pacheco in 825ce18
+- chore(deps): upgrade ckan extensions by @Bruno Pacheco in ab77b39
+- chore(deps): update aquasecurity/trivy-action action to v0.29.0 by @Renovate Bot in 0b1cf02
+- chore(deps): update fsfe/reuse-action action to v5 by @Renovate Bot in 85895d6
+
+
+### Fixed
+- Hotfix 1.4.0 by @Hans-Chrstian in 7f632ce
+- fix: reuse CKAN_SQLALCHEMY_URL in upload_vocabulary.sh by @Bruno Pacheco in 873828b
+
+
+
+## [v1.3.5] - 2025-04-04
+
+### Changed
+- chore(deps): upgrade opentelemetry components by @Bruno Pacheco in 3500557
+
+
+
+## [v1.3.4] - 2025-04-04
+
+### Changed
+- chore(deps): upgrade ckanext-gdi-userportal by @Bruno Pacheco in 4850d5f
+- chore: update ckanext-gdi-userportal HEAD commit by @Bruno Pacheco in 4a16fc9
+- chore: use cached trivy db by @Bruno Pacheco in d9caea7
+- chore: cache trivy db by @Bruno Pacheco in a870d4f
+- chore: update ckanext-gdi-userportal HEAD commit by @Bruno Pacheco in 7289ccc
+- Prepare for release v1.3.3 (#143) by @Hans-Christian in ba6f8c9
+
+
+### Fixed
+- fix: revert severity of trivy scanner to CRITICAL only by @Bruno Pacheco in b3720b6
+
+
+
 
 ## [v1.3.3] - 2024-10-16
 
