@@ -13,8 +13,7 @@ USER ckan
 RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.3.11#egg=ckanext-gdi-userportal && \
     pip3 install -r ${APP_DIR}/src/ckanext-gdi-userportal/requirements.txt
 
-RUN pip3 install -e git+https://github.com/ckan/ckanext-dcat.git@v2.3.0#egg=ckanext-dcat && \
-    pip3 install -r ${APP_DIR}/src/ckanext-dcat/requirements.txt
+RUN pip3 install ckanext-dcat==2.3.0
 
 RUN pip3 install -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.1#egg=ckanext-harvest && \
     pip3 install -r ${APP_DIR}/src/ckanext-harvest/requirements.txt
@@ -48,12 +47,6 @@ COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
 COPY --chown=ckan-sys:ckan-sys setup/prerun.py ${APP_DIR}
 COPY --chown=ckan-sys:ckan-sys setup/start_ckan.sh ${APP_DIR}
-
-# Wget can be removed when https://github.com/ckan/ckan-docker-base/issues/110 is resolved
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    wget \
-    && rm -rf /var/lib/apt/lists/* \
-    && echo "Wget installation is complete."
 
 USER ckan
 
