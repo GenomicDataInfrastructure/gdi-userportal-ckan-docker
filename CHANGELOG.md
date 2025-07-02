@@ -12,6 +12,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.13] - 2025-04-11
+
+### Added
+- feat(ART-12204): update change log by @jadzlnds in 2fe59f6
+- feat(ART-12204): update change log by @jadzlnds in b3748b4
+
+
+### Fixed
+- fix(ART-12367): update dcat ext version by @jadzlnds in e82237c
+- fix(ART-12367): update dcat ext version by @jadzlnds in 457a295
+
+
 ## [v1.3.12] - 2025-04-04
 
 ### Changed
