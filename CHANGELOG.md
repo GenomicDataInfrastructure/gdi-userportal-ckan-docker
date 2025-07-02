@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+
+## [v1.3.14] - 2025-04-14
+
+### Changed
+- Bump fairdatapoint 136 (#180) by @Hans-Christian in 3d587ee
+
 ## [v1.3.13] - 2025-04-11
 
 ### Added
@@ -23,14 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix(ART-12367): update dcat ext version by @jadzlnds in e82237c
 - fix(ART-12367): update dcat ext version by @jadzlnds in 457a295
 
-
 ## [v1.3.12] - 2025-04-04
 
 ### Changed
 - Onlky focus HealthDCAT by @Hans-Chrstian in 36e9479
 - Only focus HealthDCAP AP by @Hans-Chrstian in 66d4e17
 - Initial commit of Health DCAT FDP support + Dataseries support by @Hans-Chrstian in f1a76a3
-
 
 
 ## [v1.3.9] - 2025-04-04
