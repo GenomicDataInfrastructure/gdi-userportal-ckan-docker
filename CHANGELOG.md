@@ -12,6 +12,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.15] - 2025-07-08
+
+### Added
+- feat(dataseries) initial commit dataseries (#186) by @Hans-Christian in ecae98e
+- feat(fix) remove work around to make it by @Hans-Chrstian in 170082d
+
+
+### Changed
+- chore: upgrade ckan modules by @Bruno Pacheco in c2c19f2
+- chore(deps): update aquasecurity/trivy-action action to v0.32.0 by @Renovate Bot in 1c4baf2
+- chore(deps): update ckan/ckan-dev docker tag to v2.11.3 by @Renovate Bot in d8c6242
+- chore(deps): update ckan/ckan-base docker tag to v2.11.3 by @Renovate Bot in d7e14f4
+- doc: update CHANGELOG.md for v1.3.14 by @LNDS-Sysadmins in 62aa6e4
+- doc: update CHANGELOG.md for v1.3.13 by @LNDS-Sysadmins in 195c74f
+
+
 
 ## [v1.3.14] - 2025-04-14
 
