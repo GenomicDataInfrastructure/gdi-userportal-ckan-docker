@@ -10,7 +10,7 @@ USER root
 RUN chown -R ckan:ckan-sys ${APP_DIR}
 USER ckan
 
-RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.4.0#egg=ckanext-gdi-userportal && \
+RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.5.0#egg=ckanext-gdi-userportal && \
     pip3 install -r ${APP_DIR}/src/ckanext-gdi-userportal/requirements.txt && \
     pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.3.1#egg=ckanext-dcat && \
     pip3 install -r ${APP_DIR}/src/ckanext-dcat/requirements.txt && \
@@ -19,7 +19,7 @@ RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userpor
     pip3 install -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.1#egg=ckanext-harvest && \
     pip3 install -r ${APP_DIR}/src/ckanext-harvest/requirements.txt && \
     pip3 install -e git+https://github.com/CivityNL/ckanext-scheming.git@release-3.0.0-civity-1#egg=ckanext-scheming[requirements] && \
-    pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.5.0#egg=ckanext-fairdatapoint && \
+    pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.6.0#egg=ckanext-fairdatapoint && \
     pip3 install -r ${APP_DIR}/src/ckanext-fairdatapoint/requirements.txt
 
 USER root
@@ -50,9 +50,9 @@ COPY --chown=ckan-sys:ckan-sys setup/start_ckan.sh ${APP_DIR}
 USER ckan
 
 RUN for d in $APP_DIR/patches/*; do \
-        if [ -d $d ]; then \
-            for f in `ls $d/*.patch | sort -g`; do \
-                cd $SRC_DIR/`basename "$d"` && echo "$0: Applying patch $f to $SRC_DIR/`basename $d`"; patch -p1 < "$f" ; \
-            done ; \
-        fi ; \
+    if [ -d $d ]; then \
+    for f in `ls $d/*.patch | sort -g`; do \
+    cd $SRC_DIR/`basename "$d"` && echo "$0: Applying patch $f to $SRC_DIR/`basename $d`"; patch -p1 < "$f" ; \
+    done ; \
+    fi ; \
     done
