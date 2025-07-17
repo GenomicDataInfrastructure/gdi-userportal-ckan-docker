@@ -16,6 +16,8 @@ services:
 
   ckan-dev:
     build:
+      platforms:
+        - linux/amd64
       context: ckan/
       dockerfile: Dockerfile.dev
       args:
