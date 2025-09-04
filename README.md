@@ -40,8 +40,13 @@ CKAN and all the components are configured using environment variables that you 
 * If you are using an Apple Silicon laptop (e.g., M1 or M2), add the following property to your `docker-compose.yml` file within ckan-dev service to ensure compatibility:
 
 ```yaml
-  platforms:
-    - linux/amd64
+services:
+
+  ckan-dev:
+    platform: linux/amd64
+    build:
+      context: ckan/
+      dockerfile: Dockerfile.dev
 ```
 
 ## 3. Useful commands
