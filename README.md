@@ -36,8 +36,13 @@ CKAN and all the components are configured using environment variables that you 
 
 * Install docker with support to docker compose v2.
   * Ensure you have enough computer resources, if you are using `colima`: `colima start --arch aarch64 --vm-type=vz --mount-type=virtiofs --vz-rosetta --cpu 4 --memory 10`
-* Copy `.env.example` to `.env`.
-* Ensure git submodules are pulled correctly after clone CKAN-DOCKER `git submodule update --init`
+* Ensure git submodules are pulled correctly after clone gdi-userportal-ckan-docker `git submodule update --init`
+* If you are using an Apple Silicon laptop (e.g., M1 or M2), add the following property to your `docker-compose.yml` file within ckan-dev service to ensure compatibility:
+
+```yaml
+  platforms:
+    - linux/amd64
+```
 
 ## 3. Useful commands
 
