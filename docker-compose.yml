@@ -77,3 +77,5 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "-e", "QUIT"]
+    ports:
+      - "127.0.0.1:6379:6379"
