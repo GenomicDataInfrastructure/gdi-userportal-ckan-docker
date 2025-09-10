@@ -45,6 +45,11 @@ COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
 COPY --chown=ckan-sys:ckan-sys setup/prerun.py ${APP_DIR}
 COPY --chown=ckan-sys:ckan-sys setup/start_ckan_development.sh ${APP_DIR}
 
+#CVE-2025-6965 (wait for ckan base to be updated: https://github.com/ckan/ckan-docker/issues/231)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libsqlite3-0=3.40.1-2+deb12u2 \
+    && rm -rf /var/lib/apt/lists/*
+
 USER ckan
 
 RUN for d in $APP_DIR/patches/*; do \
