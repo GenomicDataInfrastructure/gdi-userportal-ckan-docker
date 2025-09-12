@@ -12,6 +12,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.20] - 2025-09-12
+
+### Added
+- feat(readme) : Improved readme for setting up with Apple Sillicon laptop closes #192 by @Hans-christian in 791490d
+
+
+### Changed
+- Update CHANGELOG.md by @Hans-Christian in 3fa7d02
+- doc: update CHANGELOG.md for v1.3.19 by @LNDS-Sysadmins in 1c17677
+- Update README.md by @Hans-Christian in 2313ada
+
+
+### Fixed
+- fix make retentionperion and temporal visisble by @Hans-christian in 98a84d5
+
+
 ## [v1.3.19] - 2025-09-10
 
 ### Fixed
