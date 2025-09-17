@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.21] - 2025-09-17
+
+### Changed
+- doc: update CHANGELOG.md for v1.3.20 by @LNDS-Sysadmins in a1feed0
+
+
+### Fixed
+- fix(language) Update version number of userportal by @Hans-christian in d52b29f
+
+
 ## [v1.3.20] - 2025-09-12
 
 ### Added
