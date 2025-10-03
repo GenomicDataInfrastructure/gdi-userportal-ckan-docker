@@ -24,6 +24,12 @@ then
     ckan config-tool $CKAN_INI "ckan.harvest.s3_rdf.aws_secret_key=${CKAN_HARVEST_S3_RDF_AWS_SECRET_KEY}"
 fi
 
+if [[ -n "${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY:-}" ]]
+then
+    echo "Adding bioportal_api_key to ini file."
+    ckan config-tool $CKAN_INI "ckanext.fairdatapoint.bioportal_api_key=${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY}"
+fi
+
 # Run the prerun script to init CKAN and create the default admin user
 python3 prerun.py
 
