@@ -10,18 +10,35 @@ USER root
 RUN chown -R ckan:ckan-sys ${APP_DIR}
 USER ckan
 
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_ROOT_USER_ACTION=ignore \
+    PIP_SRC=${APP_DIR}/src
 
-RUN pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.11.0#egg=ckanext-gdi-userportal && \
-    pip3 install -r ${APP_DIR}/src/ckanext-gdi-userportal/requirements.txt && \
-    pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.3.3#egg=ckanext-dcat && \
-    pip3 install -r ${APP_DIR}/src/ckanext-dcat/requirements.txt && \
-    pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dataset-series.git@v1.0.0#egg=ckanext-dataset-series && \
-    pip3 install -r ${APP_DIR}/src/ckanext-dataset-series/requirements.txt && \
-    pip3 install -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.1#egg=ckanext-harvest && \
-    pip3 install -r ${APP_DIR}/src/ckanext-harvest/requirements.txt && \
-    pip3 install -e git+https://github.com/CivityNL/ckanext-scheming.git@release-3.0.0-civity-1#egg=ckanext-scheming[requirements] && \
-    pip3 install -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.6.0#egg=ckanext-fairdatapoint && \
-    pip3 install -r ${APP_DIR}/src/ckanext-fairdatapoint/requirements.txt
+RUN set -eux; \
+    python -m pip install --upgrade --no-cache-dir pip setuptools wheel; \
+    python -m pip install --no-cache-dir \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.11.0#egg=ckanext-gdi-userportal \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.3.3#egg=ckanext-dcat \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dataset-series.git@v1.0.0#egg=ckanext-dataset-series \
+        -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.1#egg=ckanext-harvest \
+        'ckanext-scheming[requirements] @ git+https://github.com/ckan/ckanext-scheming.git@release-3.1.0' \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.6.0#egg=ckanext-fairdatapoint \
+        -e git+https://github.com/ckan/ckanext-fluent.git#egg=ckanext-fluent; \
+    for requirement in \
+        ckanext-gdi-userportal \
+        ckanext-dcat \
+        ckanext-dataset-series \
+        ckanext-harvest \
+        ckanext-fairdatapoint \
+        ckanext-fluent \
+    ; do \
+        req_file="${APP_DIR}/src/${requirement}/requirements.txt"; \
+        if [ -f "${req_file}" ]; then \
+            python -m pip install --no-cache-dir -r "${req_file}"; \
+        fi; \
+    done; \
+    python -m pip check
 
 USER root
 
