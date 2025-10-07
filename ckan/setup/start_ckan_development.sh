@@ -20,6 +20,12 @@ then
     ckan config-tool $CKAN_INI "api_token.jwt.decode.secret=${JWT_SECRET}"
 fi
 
+if [[ -n "${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY:-}" ]]
+then
+    echo "Adding bioportal_api_key to ini file."
+    ckan config-tool $CKAN_INI "ckanext.fairdatapoint.bioportal_api_key=${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY}"
+fi
+
 # Update the plugins setting in the ini file with the values defined in the env var
 echo "Loading the following plugins: $CKAN__PLUGINS"
 ckan config-tool $CKAN_INI "ckan.plugins = $CKAN__PLUGINS"
