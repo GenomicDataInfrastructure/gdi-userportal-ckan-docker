@@ -18,7 +18,7 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 RUN set -eux; \
     python -m pip install --upgrade --no-cache-dir pip setuptools wheel; \
     python -m pip install --no-cache-dir \
-        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.11.0#egg=ckanext-gdi-userportal \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.11.1#egg=ckanext-gdi-userportal \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.3.5#egg=ckanext-dcat \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dataset-series.git@v1.0.0#egg=ckanext-dataset-series \
         -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.1#egg=ckanext-harvest \
