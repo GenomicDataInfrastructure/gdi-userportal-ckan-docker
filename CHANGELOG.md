@@ -12,6 +12,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.23] - 2025-10-07
+
+### Added
+- feat(multilingual) Add multilingual to CKAN by @Hans-christian in 6ead425
+
+
+### Changed
+- Patch version of userportal by @Hans-christian in 82734ba
+- update dcat extension by @Hans-christian in f9039fa
+- bump fdp version by @Hans-christian in a492651
+- Add BioPortal API key support for FAIRDataPoint by @Quinten in 97f622e
+- doc: update CHANGELOG.md for v1.3.22 by @LNDS-Sysadmins in d1cdb12
+
+
+### Fixed
+- patch dcat by @Hans-christian in 5ac03e0
+- fix release by @Hans-christian in 94fbb96
+
+
 ## [v1.3.22] - 2025-09-17
 
 ### Changed
