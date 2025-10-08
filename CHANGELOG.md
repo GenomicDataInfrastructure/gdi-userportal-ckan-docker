@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.24] - 2025-10-08
+
+### Changed
+- doc: update CHANGELOG.md for v1.3.23 by @LNDS-Sysadmins in 9304f7f
+
+
+### Fixed
+- fix(version-notes) Patch for version notes (#207) by @Hans-Christian in 23560bb
+
+
 ## [v1.3.23] - 2025-10-07
 
 ### Added
