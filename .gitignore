@@ -14,3 +14,9 @@ _src/*
 local/*
 venv
 .env.secrets
+.idea/gdi-userportal-ckan-docker.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/.gitignore
