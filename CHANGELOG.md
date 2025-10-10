@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.25] - 2025-10-10
+
+### Fixed
+- fix(spatial) Fix to make spatial coverage work by @Hans-christian in 67b0843
+
+
 ## [v1.3.23] - 2025-10-07
 
 ### Added
