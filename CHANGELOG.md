@@ -12,6 +12,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.26] - 2025-10-20
+
+### Changed
+- Fix version notes entry in CHANGELOG.md by @Hans-Christian in 5d5a019
+- chore(deps): update fsfe/reuse-action action to v6 by @Renovate Bot in ec30b57
+- doc: update CHANGELOG.md for v1.3.25 by @LNDS-Sysadmins in d1d7637
+- doc: update CHANGELOG.md for v1.3.24 by @LNDS-Sysadmins in b307e5f
+
+
+### Fixed
+- fix(status-ontology) status distribution validates agains wrong ontology by @Hans-christian in e93bdca
+
+
 ## [v1.3.25] - 2025-10-10
 
 ### Fixed
