@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Fixed
-- fix(version-notes) Patch for version notes (#207) by @Hans-Christian in 23560b
+- fix(version-notes) Patch for version notes (#207) by @Hans-Christian in 23560bb
 
 
 ## [v1.3.23] - 2025-10-07
