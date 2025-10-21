@@ -12,16 +12,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.26] - 2025-10-20
+
+### Changed
+- chore(deps): update fsfe/reuse-action action to v6 by @Renovate Bot in ec30b57
+
+### Fixed
+- fix(status-ontology) status distribution validates agains wrong ontology by @Hans-christian in e93bdca
+
+
 ## [v1.3.25] - 2025-10-10
 
 ### Fixed
 - fix(spatial) Fix to make spatial coverage work by @Hans-christian in 67b0843
 
 ## [v1.3.24] - 2025-10-08
-
-### Changed
-- doc: update CHANGELOG.md for v1.3.23 by @LNDS-Sysadmins in 9304f7f
-
 
 ### Fixed
 - fix(version-notes) Patch for version notes (#207) by @Hans-Christian in 23560bb
@@ -38,19 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - update dcat extension by @Hans-christian in f9039fa
 - bump fdp version by @Hans-christian in a492651
 - Add BioPortal API key support for FAIRDataPoint by @Quinten in 97f622e
-- doc: update CHANGELOG.md for v1.3.22 by @LNDS-Sysadmins in d1cdb12
-
-
-### Fixed
-- patch dcat by @Hans-christian in 5ac03e0
-- fix release by @Hans-christian in 94fbb96
 
 
 ## [v1.3.22] - 2025-09-17
-
-### Changed
-- doc: update CHANGELOG.md for v1.3.21 by @LNDS-Sysadmins in 8769232
-
 
 ### Fixed
 - patch-userportal-fix-facet by @Hans-christian in 82f8938
