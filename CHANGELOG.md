@@ -12,6 +12,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.27] - 2025-10-21
+
+### Changed
+- Update CHANGELOG.md by @Hans-Christian in 9811c0a
+- doc: update CHANGELOG.md for v1.3.26 by @LNDS-Sysadmins in 6fc577c
+
+
+### Fixed
+- fix(fdp-harvest) fix harvesting of dct:status by @Hans-christian in c215a01
+
+
 ## [v1.3.26] - 2025-10-20
 
 ### Changed
