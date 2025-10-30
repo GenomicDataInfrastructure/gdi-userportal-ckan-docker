@@ -12,6 +12,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.28] - 2025-10-30
+
+### Changed
+- doc: update CHANGELOG.md for v1.3.27 by @LNDS-Sysadmins in ec37e7d
+- chore(deps): update docker.io/postgres docker tag to v18 by @Renovate Bot in a0a34d4
+
+
+### Fixed
+- fix(qualified-attribution) patch ckan by @Hans-christian in 2fadecc
+- fix(status) fix status display to frond end by @Hans-christian in 9f49fa9
+
+
 ## [v1.3.27] - 2025-10-21
 
 ### Changed
