@@ -24,7 +24,7 @@ RUN set -eux; \
         -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.1#egg=ckanext-harvest \
         'ckanext-scheming[requirements] @ git+https://github.com/ckan/ckanext-scheming.git@release-3.1.0' \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.6.3#egg=ckanext-fairdatapoint \
-        -e git+https://github.com/ckan/ckanext-fluent.git#egg=ckanext-fluent; \
+        -e git+https://github.com/ckan/ckanext-fluent.git@v1.5.0#egg=ckanext-fluent; \
     for requirement in \
         ckanext-gdi-userportal \
         ckanext-dcat \
@@ -43,10 +43,17 @@ RUN set -eux; \
 USER root
 
 ### Install everything we need for the harvester
-# Install cron and supervisor. 
+# Install cron and supervisor.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     supervisor \
+    && apt-get install -y --only-upgrade \
+    libexpat1 \
+    libgnutls30 \
+    libpam-runtime \
+    libsqlite3-0 \
+    perl \
+    zlib1g \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/log/ckan/std /var/log/supervisor /etc/supervisor/conf.d \
     && chown -R ckan:ckan-sys /var/log/ckan /var/log/supervisor /etc/supervisor/conf.d

@@ -45,6 +45,13 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     supervisor \
+    && apt-get install -y --only-upgrade \
+    libexpat1 \
+    libgnutls30 \
+    libpam-runtime \
+    libsqlite3-0 \
+    perl \
+    zlib1g \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/log/ckan/std /var/log/supervisor /etc/supervisor/conf.d \
     && chown -R ckan:ckan-sys /var/log/ckan /var/log/supervisor /etc/supervisor/conf.d
