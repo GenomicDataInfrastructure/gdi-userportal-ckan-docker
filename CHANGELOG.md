@@ -14,22 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v1.3.29] - 2025-11-11
 
-### Changed
-- chore(deps): update ckan/ckan-dev docker tag to v2.11.4 by @Renovate Bot in 94084d8
-- chore(deps): update ckan/ckan-base docker tag to v2.11.4 by @Renovate Bot in a0769fc
-- doc: update CHANGELOG.md for v1.3.28 by @LNDS-Sysadmins in e8aa903
-
-
 ### Fixed
 - fix(contact-name) patch contact name by @Hans-christian in d613347
 
 
 ## [v1.3.28] - 2025-10-30
-
-### Changed
-- doc: update CHANGELOG.md for v1.3.27 by @LNDS-Sysadmins in ec37e7d
-- chore(deps): update docker.io/postgres docker tag to v18 by @Renovate Bot in a0a34d4
-
 
 ### Fixed
 - fix(qualified-attribution) patch ckan by @Hans-christian in 2fadecc
@@ -38,19 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v1.3.27] - 2025-10-21
 
-### Changed
-- Update CHANGELOG.md by @Hans-Christian in 9811c0a
-- doc: update CHANGELOG.md for v1.3.26 by @LNDS-Sysadmins in 6fc577c
-
-
 ### Fixed
 - fix(fdp-harvest) fix harvesting of dct:status by @Hans-christian in c215a01
 
 
 ## [v1.3.26] - 2025-10-20
-
-### Changed
-- chore(deps): update fsfe/reuse-action action to v6 by @Renovate Bot in ec30b57
 
 ### Fixed
 - fix(status-ontology) status distribution validates agains wrong ontology by @Hans-christian in e93bdca
@@ -88,10 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v1.3.21] - 2025-09-17
 
-### Changed
-- doc: update CHANGELOG.md for v1.3.20 by @LNDS-Sysadmins in a1feed0
-
-
 ### Fixed
 - fix(language) Update version number of userportal by @Hans-christian in d52b29f
 
@@ -104,7 +81,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update CHANGELOG.md by @Hans-Christian in 3fa7d02
-- doc: update CHANGELOG.md for v1.3.19 by @LNDS-Sysadmins in 1c17677
 - Update README.md by @Hans-Christian in 2313ada
 
 
@@ -121,9 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v1.3.16] - 2025-09-02
 
 ### Changed
-- chore(deps): update actions/checkout action to v5 by @Renovate Bot in 049cdce
 - Patch extensions (#188) by @Hans-Christian in f5004a1
-- doc: update CHANGELOG.md for v1.3.15 by @LNDS-Sysadmins in 2b258dd
 
 
 ## [v1.3.15] - 2025-07-08
@@ -135,12 +109,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - chore: upgrade ckan modules by @Bruno Pacheco in c2c19f2
-- chore(deps): update aquasecurity/trivy-action action to v0.32.0 by @Renovate Bot in 1c4baf2
-- chore(deps): update ckan/ckan-dev docker tag to v2.11.3 by @Renovate Bot in d8c6242
-- chore(deps): update ckan/ckan-base docker tag to v2.11.3 by @Renovate Bot in d7e14f4
-- doc: update CHANGELOG.md for v1.3.14 by @LNDS-Sysadmins in 62aa6e4
-- doc: update CHANGELOG.md for v1.3.13 by @LNDS-Sysadmins in 195c74f
-
 
 
 ## [v1.3.14] - 2025-04-14
@@ -172,7 +140,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - chore(deps): update ckan/ckan-dev docker tag to v2.11.2 by @Renovate Bot in 1e9057a
 - chore(deps): update ckan/ckan-base docker tag to v2.11.2 by @Renovate Bot in caaf560
-
 
 
 ## [v1.3.8] - 2025-04-04
