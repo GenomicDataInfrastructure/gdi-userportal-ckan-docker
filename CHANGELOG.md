@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.30] - 2025-11-18
+
+### Fixed
+- patch userportal by @Hans-christian in 8c8ce39
+- fix(contact-name) Improved fix contact by @Hans-christian in 4e09cc5
+
+
 ## [v1.3.29] - 2025-11-11
 
 ### Fixed
