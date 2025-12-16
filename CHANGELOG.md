@@ -12,6 +12,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.31] - 2025-12-15
+
+### Added
+- feat: update ckan with correct packages by @Hans-christian in 10ea353
+
+
+### Changed
+- chore(deps): update actions/cache action to v5 by @Renovate Bot in f535cff
+- chore(deps): update actions/checkout action to v6 by @Renovate Bot in 975b761
+- Clean up CHANGELOG.md by removing old entries by @Quinten in 5076983
+- doc: update CHANGELOG.md for v1.3.30 by @LNDS-Sysadmins in 5017700
+
+
 ## [v1.3.30] - 2025-11-18
 
 ### Fixed
