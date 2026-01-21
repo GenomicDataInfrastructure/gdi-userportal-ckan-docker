@@ -12,6 +12,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.32] - 2026-01-16
+
+### Added
+- feat: patch extensions by @Hans-christian in c53e2f7
+
+
+### Changed
+- chore(harvester) Update harvest extension to 1.6.2 by @Hans-christian in 5fa6896
+- chore(deps): update ckanext-gdi-userportal to v1.11.10 by @Bruno Pacheco in 5bed1d3
+- doc: update CHANGELOG.md for v1.3.31 by @LNDS-Sysadmins in 39a8c7f
+
+
+### Fixed
+- fixt(fdp) fix harvest distribution by @Hans-christian in d9efdf5
+- patch userportal extensions by @Hans-christian in 6fb2269
+
+
 ## [v1.3.31] - 2025-12-15
 
 ### Added
