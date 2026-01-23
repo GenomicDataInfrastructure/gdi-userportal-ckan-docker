@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.35] - 2026-01-23
+
+### Added
+- feat(UI) update CKAN UI by @nolliia in c2f5b91
+
+
+### Changed
+- doc: update CHANGELOG.md for v1.3.33 by @LNDS-Sysadmins in 676364e
+
+
 ## [v1.3.33] - 2026-01-22
 
 ### Changed
