@@ -15,6 +15,7 @@ volumes:
 services:
 
   ckan-dev:
+    platform: linux/amd64
     build:
       context: ckan/
       dockerfile: Dockerfile.dev

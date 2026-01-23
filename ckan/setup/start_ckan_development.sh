@@ -4,6 +4,15 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+# Install local extensions from src_extensions volume mount
+echo "Installing local extensions from /srv/app/src_extensions"
+for ext in /srv/app/src_extensions/ckanext-*; do
+    if [ -d "$ext" ]; then
+        echo "Installing $ext"
+        pip install -e "$ext"
+    fi
+done
+
 # Set debug to true
 echo "Enabling debug mode"
 ckan config-tool $CKAN_INI -s DEFAULT "debug = true"
@@ -44,6 +53,21 @@ then
         esac
         echo
     done
+fi
+
+# Initialize the database (must run after extensions are installed)
+echo "Initializing database..."
+ckan -c $CKAN_INI db init
+echo "Upgrading database..."
+ckan -c $CKAN_INI db upgrade
+echo "Upgrading harvest database..."
+ckan -c $CKAN_INI db upgrade -p harvest
+
+# Create sysadmin user if credentials are provided
+if [[ -n "${CKAN_SYSADMIN_NAME:-}" ]] && [[ -n "${CKAN_SYSADMIN_PASSWORD:-}" ]] && [[ -n "${CKAN_SYSADMIN_EMAIL:-}" ]]; then
+    echo "Creating sysadmin user..."
+    ckan -c $CKAN_INI user add $CKAN_SYSADMIN_NAME password=$CKAN_SYSADMIN_PASSWORD email=$CKAN_SYSADMIN_EMAIL || true
+    ckan -c $CKAN_INI sysadmin add $CKAN_SYSADMIN_NAME || true
 fi
 
 CKAN_RUN="/usr/local/bin/ckan -c $CKAN_INI run -H 0.0.0.0"
