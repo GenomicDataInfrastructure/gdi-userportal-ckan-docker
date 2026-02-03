@@ -12,6 +12,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.36] - 2026-02-02
+
+### Added
+- feat(local development): add script to install local extensions and update docker-compose for amd64 platform, by @nolliia in 8e64e66
+
+
+### Changed
+- chore: update GitHub Actions workflow to allow Trivy scanner to continue on error for base image vulnerabilities by @nolliia in 5a2e267
+- chore: update gdi-userportal extension to v1.11.16 and sync subproject commit by @nolliia in 27ba4b6
+- chore: update GitHub Actions workflow to allow Trivy scanner to continue on error for base image vulnerabilities by @nolliia in 69f01d4
+- chore: update gdi-userportal extension to latest commit 00df8d7 by @nolliia in 9330025
+- chore: update gdi-userportal extension to v1.11.15 and add script for term translation migrations on startup by @nolliia in c79db73
+- doc: update CHANGELOG.md for v1.3.35 by @LNDS-Sysadmins in a65f337
+
+
 ## [v1.3.35] - 2026-01-23
 
 ### Added
