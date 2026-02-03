@@ -39,6 +39,14 @@ fi
 echo "Loading the following plugins: $CKAN__PLUGINS"
 ckan config-tool $CKAN_INI "ckan.plugins = $CKAN__PLUGINS"
 
+# Install local extension requirements early so CKAN CLI commands that load plugins
+# (db init/upgrade, custom CLI, etc.) don't randomly fail on fresh volumes.
+if [[ -f "/docker-entrypoint.d/00_install_local_extensions.sh" ]]
+then
+    echo "Installing local extension requirements (before prerun/db init)..."
+    /bin/bash "/docker-entrypoint.d/00_install_local_extensions.sh"
+fi
+
 # Run the prerun script to init CKAN and create the default admin user
 python3 prerun.py
 
@@ -47,27 +55,13 @@ if [[ -d "/docker-entrypoint.d" ]]
 then
     for f in /docker-entrypoint.d/*; do
         case "$f" in
+            /docker-entrypoint.d/00_install_local_extensions.sh) echo "$0: Skipping $f (already ran earlier)";;
             *.sh)     echo "$0: Running init file $f"; . "$f" ;;
             *.py)     echo "$0: Running init file $f"; python3 "$f"; echo ;;
             *)        echo "$0: Ignoring $f (not an sh or py file)" ;;
         esac
         echo
     done
-fi
-
-# Initialize the database (must run after extensions are installed)
-echo "Initializing database..."
-ckan -c $CKAN_INI db init
-echo "Upgrading database..."
-ckan -c $CKAN_INI db upgrade
-echo "Upgrading harvest database..."
-ckan -c $CKAN_INI db upgrade -p harvest
-
-# Create sysadmin user if credentials are provided
-if [[ -n "${CKAN_SYSADMIN_NAME:-}" ]] && [[ -n "${CKAN_SYSADMIN_PASSWORD:-}" ]] && [[ -n "${CKAN_SYSADMIN_EMAIL:-}" ]]; then
-    echo "Creating sysadmin user..."
-    ckan -c $CKAN_INI user add $CKAN_SYSADMIN_NAME password=$CKAN_SYSADMIN_PASSWORD email=$CKAN_SYSADMIN_EMAIL || true
-    ckan -c $CKAN_INI sysadmin add $CKAN_SYSADMIN_NAME || true
 fi
 
 CKAN_RUN="/usr/local/bin/ckan -c $CKAN_INI run -H 0.0.0.0"
