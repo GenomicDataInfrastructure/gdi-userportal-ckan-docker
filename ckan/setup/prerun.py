@@ -107,10 +107,12 @@ def check_solr_connection(retry=None):
 
 def init_db():
 
-    db_command = ["ckan", "-c", ckan_ini, "db", "upgrade"]
+    # `db init` is idempotent and required for a fresh database.
+    # `db upgrade` applies any pending migrations.
     print("[prerun] Initializing or upgrading db - start")
     try:
-        subprocess.check_output(db_command, stderr=subprocess.STDOUT)
+        subprocess.check_output(["ckan", "-c", ckan_ini, "db", "init"], stderr=subprocess.STDOUT)
+        subprocess.check_output(["ckan", "-c", ckan_ini, "db", "upgrade"], stderr=subprocess.STDOUT)
         print("[prerun] Initializing or upgrading db - end")
     except subprocess.CalledProcessError as e:
         if "OperationalError" in str(e.output):
@@ -121,6 +123,61 @@ def init_db():
             print(str(e))
             print(e.output)
             raise e
+
+
+def run_term_translation_migrations(retry=None):
+    """
+    Run the gdi-userportal term translation migrations.
+
+    This must run *after* CKAN DB init/upgrade so the core `term_translation`
+    table exists. The migration runner itself is idempotent and will skip
+    already-applied versions.
+    """
+    plugins = os.environ.get("CKAN__PLUGINS", "")
+    if "gdi_userportal" not in plugins:
+        print("[prerun] gdi_userportal plugin not enabled; skipping term translation migrations")
+        return
+
+    if retry is None:
+        retry = 10
+    elif retry == 0:
+        print("[prerun] Term translation migrations failed after retries")
+        sys.exit(1)
+
+    cmd = ["ckan", "-c", ckan_ini, "gdi-userportal", "translations", "migrate"]
+    print("[prerun] Running term translation migrations")
+    try:
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        print("[prerun] Term translation migrations complete")
+    except subprocess.CalledProcessError as e:
+        output = ""
+        try:
+            output = (e.output or b"").decode("utf-8", errors="replace")
+        except Exception:
+            output = str(e.output)
+
+        # If the schema isn't initialized yet, try to init/upgrade DB then retry.
+        if ("term_translation" in output) and (("does not exist" in output) or ("UndefinedTable" in output)):
+            print("[prerun] term_translation table missing; initializing/upgrading CKAN DB and retrying migrations")
+            try:
+                subprocess.check_output(["ckan", "-c", ckan_ini, "db", "init"], stderr=subprocess.STDOUT)
+            except Exception:
+                # db init is idempotent; ignore failures here and retry below
+                pass
+            try:
+                subprocess.check_output(["ckan", "-c", ckan_ini, "db", "upgrade"], stderr=subprocess.STDOUT)
+            except Exception:
+                pass
+            try:
+                subprocess.check_output(["ckan", "-c", ckan_ini, "db", "upgrade", "-p", "harvest"], stderr=subprocess.STDOUT)
+            except Exception:
+                pass
+        else:
+            print("[prerun] Term translation migrations failed, will retry")
+            print(output)
+
+        time.sleep(3)
+        run_term_translation_migrations(retry=retry - 1)
 
 
 def init_db_harvest():
@@ -153,7 +210,7 @@ def create_sysadmin():
         command = ["ckan", "-c", ckan_ini, "user", "show", name]
 
         out = subprocess.check_output(command)
-        if b"User:None" not in re.sub(b"\s", b"", out):
+        if b"User:None" not in re.sub(rb"\s", b"", out):
             print("[prerun] Sysadmin user exists, skipping creation")
             return
 
@@ -198,5 +255,6 @@ if __name__ == "__main__":
         check_main_db_connection()
         init_db()
         init_db_harvest()
+        run_term_translation_migrations()
         check_solr_connection()
         create_sysadmin()
