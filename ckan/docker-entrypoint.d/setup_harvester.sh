@@ -7,7 +7,7 @@
 # Update the config file with each extension config-options
 echo "[ckanext-harvest] Setting up config-options"
 ckan config-tool $CKAN_INI -s app:main \
-    "ckan.harvest.timeout = 10" \
+    "ckan.harvest.timeout = 30" \
     "ckan.harvest.mq.type = redis" \
     "ckan.harvest.mq.hostname = $CKAN__HARVEST__MQ__HOSTNAME" \
     "ckan.harvest.mq.port = $CKAN__HARVEST__MQ__PORT" \
