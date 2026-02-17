@@ -12,6 +12,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.38] - 2026-02-16
+
+### Changed
+- Set FDP timeout per request and extend per job to 60 minutes by @Hans-christian in 9c40268
+- Update setup_harvester.sh by @Quinten in e7588bb
+- Reduce CKAN harvest timeout to 10s by @Quinten in d41135f
+- chore(deps): update aquasecurity/trivy-action action to v0.34.0 by @Renovate Bot in 53e75f7
+- doc: update CHANGELOG.md for v1.3.37 by @LNDS-Sysadmins in d1d3923
+
+
+### Fixed
+- fix(fdp) patch time out by @Hans-christian in 3ba1708
+
+
 ## [v1.3.37] - 2026-02-05
 
 ### Changed
