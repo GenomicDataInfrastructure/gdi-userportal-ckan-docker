@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.39] - 2026-02-26
+
+### Changed
+- Bump CKAN dcat, userportal, fairdatapoint by @Quinten in 1a5fcb0
+- chore(deps): update aquasecurity/trivy-action action to v0.34.1 by @Renovate Bot in 5e7e83e
+- doc: update CHANGELOG.md for v1.3.38 by @LNDS-Sysadmins in 0140eea
+
+
 ## [v1.3.38] - 2026-02-16
 
 ### Changed
