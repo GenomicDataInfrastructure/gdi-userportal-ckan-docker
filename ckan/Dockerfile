@@ -20,7 +20,7 @@ RUN set -eux; \
     python -m pip install --no-cache-dir \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.11.19#egg=ckanext-gdi-userportal \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.4.0#egg=ckanext-dcat \
-        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dataset-series.git@v1.0.0#egg=ckanext-dataset-series \
+        -e git+https://github.com/ckan/ckanext-dataset-series.git#egg=ckanext-dataset-series \
         -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.2#egg=ckanext-harvest \
         'ckanext-scheming[requirements] @ git+https://github.com/ckan/ckanext-scheming.git@release-3.1.0' \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.6.10#egg=ckanext-fairdatapoint \
