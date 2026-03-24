@@ -12,6 +12,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.41] - 2026-03-24
+
+### Changed
+- Patch userportal extension by @Hans-christian in f5bab47
+- Update dataset series dependency version in Dockerfile by @Quinten in bde18d7
+- Update ckanext-dataset-series version in Dockerfile by @Quinten in 6293f02
+- Use official ckanext-dataset-series repo by @Quinten in e61f41a
+- chore(deps): update aquasecurity/trivy-action action to v0.35.0 by @Renovate Bot in 3fb177b
+- chore(deps): update docker/metadata-action action to v6 by @Renovate Bot in 296206c
+- chore(deps): update docker/build-push-action action to v7 by @Renovate Bot in 716cb39
+- doc: update CHANGELOG.md for v1.3.40 by @LNDS-Sysadmins in 776fcc0
+
+
 ## [v1.3.40] - 2026-03-04
 
 ### Changed
