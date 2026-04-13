@@ -1,0 +1,43 @@
+diff --git a/ckanext/gdi_userportal/plugin.py b/ckanext/gdi_userportal/plugin.py
+index ac4ac98..821a1c3 100644
+--- a/ckanext/gdi_userportal/plugin.py
++++ b/ckanext/gdi_userportal/plugin.py
+@@ -4,6 +4,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ 
+ import json
++import os
+ import ckan.plugins as plugins
+ import ckan.plugins.toolkit as toolkit
+ from ckanext.gdi_userportal.helpers import get_helpers as get_portal_helpers
+@@ -20,14 +21,12 @@ from ckanext.gdi_userportal.logic.auth.get import config_option_show
+ from ckanext.gdi_userportal.validation import scheming_isodatetime_flex
+ 
+ from opentelemetry import metrics
+-from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+ from opentelemetry.sdk.metrics import MeterProvider
+ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+ from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+ from opentelemetry.instrumentation.flask import FlaskInstrumentor
+ 
+ from opentelemetry import trace
+-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+ from opentelemetry.sdk.trace import TracerProvider
+ from opentelemetry.sdk.trace.export import BatchSpanProcessor
+ 
+@@ -35,6 +34,15 @@ import logging
+ 
+ log = logging.getLogger(__name__)
+ 
++OTEL_EXPORTER_OTLP_PROTOCOL = os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf").lower()
++
++if OTEL_EXPORTER_OTLP_PROTOCOL == "grpc":
++    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
++    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
++else:
++    from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
++    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
++
+ TRANSLATED_SEARCH_SOLR_FIELDS = {
+     field_name: f"vocab_{field_name}_search"
+     for field_name in SEARCH_INDEX_TRANSLATED_FIELDS
