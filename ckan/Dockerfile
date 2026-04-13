@@ -17,12 +17,9 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 RUN set -eux; \
     python -m pip install --upgrade --no-cache-dir pip setuptools wheel; \
-    # Match the OTEL packages already bundled in the base image and add gRPC export support for ACA.
     python -m pip install --no-cache-dir \
-        opentelemetry-exporter-otlp-proto-grpc==1.39.1; \
-    python -m pip install --no-cache-dir \
-        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.11.21#egg=ckanext-gdi-userportal \
-        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.4.0#egg=ckanext-dcat \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.11.22#egg=ckanext-gdi-userportal \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.4.1#egg=ckanext-dcat \
         -e git+https://github.com/ckan/ckanext-dataset-series.git@v0.1.1#egg=ckanext-dataset-series \
         -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.2#egg=ckanext-harvest \
         'ckanext-scheming[requirements] @ git+https://github.com/ckan/ckanext-scheming.git@release-3.1.0' \
