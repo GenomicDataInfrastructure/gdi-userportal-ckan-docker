@@ -19,7 +19,7 @@ RUN set -eux; \
     python -m pip install --upgrade --no-cache-dir pip setuptools wheel; \
     # Match the OTEL packages already bundled in the base image and add gRPC export support for ACA.
     python -m pip install --no-cache-dir \
-        opentelemetry-exporter-otlp-proto-grpc==1.39.1; \
+        opentelemetry-exporter-otlp-proto-grpc==1.40.0; \
     python -m pip install --no-cache-dir \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.11.21#egg=ckanext-gdi-userportal \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.4.0#egg=ckanext-dcat \
