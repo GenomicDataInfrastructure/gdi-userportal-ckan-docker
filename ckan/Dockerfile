@@ -18,6 +18,13 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 RUN set -eux; \
     python -m pip install --upgrade --no-cache-dir pip setuptools wheel; \
     python -m pip install --no-cache-dir \
+        opentelemetry-api==1.41.0 \
+        opentelemetry-sdk==1.41.0 \
+        opentelemetry-exporter-otlp-proto-http==1.41.0 \
+        opentelemetry-exporter-otlp-proto-grpc==1.41.0 \
+        opentelemetry-instrumentation==0.62b0 \
+        opentelemetry-instrumentation-logging==0.62b0 \
+        opentelemetry-instrumentation-requests==0.62b0 \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.11.22#egg=ckanext-gdi-userportal \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.4.1#egg=ckanext-dcat \
         -e git+https://github.com/ckan/ckanext-dataset-series.git@v0.1.1#egg=ckanext-dataset-series \
@@ -64,6 +71,19 @@ COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
 COPY --chown=ckan-sys:ckan-sys setup/prerun.py ${APP_DIR}
 COPY --chown=ckan-sys:ckan-sys setup/start_ckan.sh ${APP_DIR}
+COPY --chown=ckan-sys:ckan-sys setup/otel_sitecustomize.py ${APP_DIR}
+
+RUN python - <<'PY'
+from pathlib import Path
+import shutil
+import site
+
+source = Path("/srv/app/otel_sitecustomize.py")
+destinations = [Path(path) / "sitecustomize.py" for path in site.getsitepackages()]
+for destination in destinations:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
+PY
 
 # CVE-2025-6965 (wait for ckan base to be updated: https://github.com/ckan/ckan-docker/issues/231)
 RUN apt-get update \

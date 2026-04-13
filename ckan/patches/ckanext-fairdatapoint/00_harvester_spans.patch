@@ -1,0 +1,708 @@
+diff --git a/ckanext/fairdatapoint/harvesters/civity_harvester.py b/ckanext/fairdatapoint/harvesters/civity_harvester.py
+index 8063d38..1e98a57 100644
+--- a/ckanext/fairdatapoint/harvesters/civity_harvester.py
++++ b/ckanext/fairdatapoint/harvesters/civity_harvester.py
+@@ -13,6 +13,8 @@ from abc import abstractmethod
+ 
+ import ckan.plugins.toolkit as toolkit
+ from ckan import model
++from opentelemetry import trace
++from opentelemetry.trace import Status, StatusCode
+ 
+ from ckanext.fairdatapoint.harvesters.domain.identifier import Identifier
+ from ckanext.harvest.harvesters import HarvesterBase
+@@ -22,6 +24,7 @@ from ckanext.harvest.model import HarvestObjectExtra as HOExtra
+ ID = "id"
+ 
+ log = logging.getLogger(__name__)
++tracer = trace.get_tracer(__name__)
+ 
+ RESOLVE_LABELS = "resolve_labels"
+ 
+@@ -49,6 +52,30 @@ class CivityHarvester(HarvesterBase):
+ 
+     record_to_package_converter = None
+ 
++    @staticmethod
++    def _set_span_attribute(span, key, value):
++        if value is None:
++            return
++        span.set_attribute(key, value)
++
++    def _set_harvest_job_span_attributes(self, span, harvest_job):
++        self._set_span_attribute(span, "ckan.harvest.job_id", str(harvest_job.id))
++        self._set_span_attribute(span, "ckan.harvest.source_id", str(harvest_job.source.id))
++        self._set_span_attribute(span, "ckan.harvest.source_url", harvest_job.source.url)
++        self._set_span_attribute(span, "ckan.harvest.source_type", harvest_job.source.type)
++
++    def _set_harvest_object_span_attributes(self, span, harvest_object):
++        self._set_span_attribute(span, "ckan.harvest.object_id", str(harvest_object.id))
++        self._set_span_attribute(span, "ckan.harvest.guid", harvest_object.guid)
++        self._set_span_attribute(span, "ckan.harvest.package_id", harvest_object.package_id)
++        self._set_span_attribute(span, "ckan.harvest.source_id", str(harvest_object.source.id))
++        self._set_span_attribute(span, "ckan.harvest.source_url", harvest_object.source.url)
++
++    def _finalize_harvest_span(self, span, result):
++        self._set_span_attribute(span, "ckan.harvest.result", str(result))
++        if result is False:
++            span.set_status(Status(StatusCode.ERROR))
++
+     @abstractmethod
+     def setup_record_provider(self, harvest_url, harvest_config_dict):
+         pass
+@@ -78,85 +105,100 @@ class CivityHarvester(HarvesterBase):
+         :returns: A list of HarvestObject ids
+         """
+ 
+-        logger = logging.getLogger(__name__ + ".gather_stage")
++        with tracer.start_as_current_span(
++            f"{self.__class__.__name__}.gather_stage"
++        ) as span:
++            self._set_harvest_job_span_attributes(span, harvest_job)
++            logger = logging.getLogger(__name__ + ".gather_stage")
+ 
+-        logger.debug("Starting gather_stage for job: [%r]", harvest_job)
++            logger.debug("Starting gather_stage for job: [%r]", harvest_job)
+ 
+-        #
+-        result = []
+-
+-        self.setup_record_provider(
+-            harvest_job.source.url, self._get_harvest_config(harvest_job.source.config)
+-        )
++            result = []
++            new_count = 0
++            change_count = 0
++            delete_count = 0
+ 
+-        guids_to_package_ids = self._get_guids_to_package_ids_from_database(harvest_job)
++            try:
++                self.setup_record_provider(
++                    harvest_job.source.url, self._get_harvest_config(harvest_job.source.config)
++                )
+ 
+-        guids_in_db = set(guids_to_package_ids.keys())
++                guids_to_package_ids = self._get_guids_to_package_ids_from_database(harvest_job)
+ 
+-        guids_in_harvest = self._get_guids_in_harvest(harvest_job)
+-        if guids_in_harvest:
+-            # Sort so that dataseries are processed before datasets
+-            guids_in_harvest = sorted(
+-                guids_in_harvest,
+-                key=lambda g: 0 if "dataseries=" in g else 1
+-            )
++                guids_in_db = set(guids_to_package_ids.keys())
+ 
+-            guids_in_harvest_set = set(guids_in_harvest)
+-
+-            new = guids_in_harvest_set - guids_in_db
+-            delete = guids_in_db - guids_in_harvest_set
+-            change = guids_in_db & guids_in_harvest_set
+-
+-            for guid in new:
+-                existing = (
+-                    model.Session.query(HarvestObject)
+-                    .filter_by(guid=guid, harvest_source_id=harvest_job.source.id, harvest_job_id=harvest_job.id)
+-                    .first())
+-                if not existing:
+-                    obj = HarvestObject(
+-                        guid=guid,
+-                        job=harvest_job,
+-                        extras=[HOExtra(key="status", value="new")],
++                guids_in_harvest = self._get_guids_in_harvest(harvest_job)
++                if guids_in_harvest:
++                    # Sort so that dataseries are processed before datasets
++                    guids_in_harvest = sorted(
++                        guids_in_harvest,
++                        key=lambda g: 0 if "dataseries=" in g else 1
+                     )
+-                    obj.save()
+-                    result.append(obj.id)
+-                else:
+-                    logger.info(
+-                        "Duplicate HarvestObject for guid [%s] and source [%s] already exists. Skipping.",
+-                        guid, harvest_job.source.id
+-                    )
+-            for guid in change:
+-                obj = HarvestObject(
+-                    guid=guid,
+-                    job=harvest_job,
+-                    package_id=guids_to_package_ids[guid],
+-                    extras=[HOExtra(key="status", value="change")],
+-                )
+-                obj.save()
+-                result.append(obj.id)
+-            for guid in delete:
+-                obj = HarvestObject(
+-                    guid=guid,
+-                    job=harvest_job,
+-                    package_id=guids_to_package_ids[guid],
+-                    extras=[HOExtra(key="status", value="delete")],
+-                )
+-                # TODO
+-                #  Deleted object is marked as not being current here already. When the actual deletion of the package
+-                #  fails in the import stage, an orphan package will remain in existence and never be deleted.
+-                model.Session.query(HarvestObject).filter_by(guid=guid).update(
+-                    {"current": False}, False
+-                )
+-                obj.save()
+-                result.append(obj.id)
+ 
+-        # Why is this needed? An empty list seems a valid result of this stage. There is simply nothing to do
+-        # if len(result) == 0:
+-        #     result = None
+-
+-        logger.debug("Finished gather_stage for job: [%r]", harvest_job)
+-
+-        return result
++                    guids_in_harvest_set = set(guids_in_harvest)
++
++                    new = guids_in_harvest_set - guids_in_db
++                    delete = guids_in_db - guids_in_harvest_set
++                    change = guids_in_db & guids_in_harvest_set
++                    new_count = len(new)
++                    change_count = len(change)
++                    delete_count = len(delete)
++
++                    for guid in new:
++                        existing = (
++                            model.Session.query(HarvestObject)
++                            .filter_by(guid=guid, harvest_source_id=harvest_job.source.id, harvest_job_id=harvest_job.id)
++                            .first())
++                        if not existing:
++                            obj = HarvestObject(
++                                guid=guid,
++                                job=harvest_job,
++                                extras=[HOExtra(key="status", value="new")],
++                            )
++                            obj.save()
++                            result.append(obj.id)
++                        else:
++                            logger.info(
++                                "Duplicate HarvestObject for guid [%s] and source [%s] already exists. Skipping.",
++                                guid, harvest_job.source.id
++                            )
++                    for guid in change:
++                        obj = HarvestObject(
++                            guid=guid,
++                            job=harvest_job,
++                            package_id=guids_to_package_ids[guid],
++                            extras=[HOExtra(key="status", value="change")],
++                        )
++                        obj.save()
++                        result.append(obj.id)
++                    for guid in delete:
++                        obj = HarvestObject(
++                            guid=guid,
++                            job=harvest_job,
++                            package_id=guids_to_package_ids[guid],
++                            extras=[HOExtra(key="status", value="delete")],
++                        )
++                        # TODO
++                        #  Deleted object is marked as not being current here already. When the actual deletion of the package
++                        #  fails in the import stage, an orphan package will remain in existence and never be deleted.
++                        model.Session.query(HarvestObject).filter_by(guid=guid).update(
++                            {"current": False}, False
++                        )
++                        obj.save()
++                        result.append(obj.id)
++
++                self._set_span_attribute(span, "ckan.harvest.object_count", len(result))
++                self._set_span_attribute(span, "ckan.harvest.new_count", new_count)
++                self._set_span_attribute(span, "ckan.harvest.change_count", change_count)
++                self._set_span_attribute(span, "ckan.harvest.delete_count", delete_count)
++
++                logger.debug("Finished gather_stage for job: [%r]", harvest_job)
++                self._finalize_harvest_span(span, result)
++                return result
++            except Exception as exc:
++                span.record_exception(exc)
++                span.set_status(Status(StatusCode.ERROR, str(exc)))
++                raise
+ 
+     def fetch_stage(self, harvest_object):
+         """
+@@ -177,68 +219,71 @@ class CivityHarvester(HarvesterBase):
+                   all, False if not successful
+         """
+ 
+-        logger = logging.getLogger(__name__ + ".fetch_stage")
++        with tracer.start_as_current_span(
++            f"{self.__class__.__name__}.fetch_stage"
++        ) as span:
++            self._set_harvest_object_span_attributes(span, harvest_object)
++            logger = logging.getLogger(__name__ + ".fetch_stage")
+ 
+-        logger.debug("Starting fetch_stage for harvest object [%s]", harvest_object.id)
++            logger.debug("Starting fetch_stage for harvest object [%s]", harvest_object.id)
+ 
+-        self.setup_record_provider(
+-            harvest_object.source.url,
+-            self._get_harvest_config(harvest_object.source.config),
+-        )
+-
+-        # Check harvest object status
+-        status = self._get_object_extra(harvest_object, "status")
++            self.setup_record_provider(
++                harvest_object.source.url,
++                self._get_harvest_config(harvest_object.source.config),
++            )
+ 
+-        if status == "delete":
+-            # No need to fetch anything, just pass to the import stage
+-            result = True
++            status = self._get_object_extra(harvest_object, "status")
++            self._set_span_attribute(span, "ckan.harvest.status", status)
+ 
+-        else:
+-            identifier = harvest_object.guid
+-            try:
+-                record = self.record_provider.get_record_by_id(identifier)
++            if status == "delete":
++                result = True
++            else:
++                identifier = harvest_object.guid
++                try:
++                    record = self.record_provider.get_record_by_id(identifier)
++
++                    if record:
++                        try:
++                            harvest_object.content = record
++                            harvest_object.save()
++                        except Exception as e:
++                            self._save_object_error(
++                                "Error saving harvest object for identifier [%s] [%r]"
++                                % (identifier, e),
++                                harvest_object,
++                            )
++                            self._finalize_harvest_span(span, False)
++                            return False
++
++                        model.Session.commit()
++
++                        logger.debug(
++                            "Record content saved for ID [%s], harvest object ID [%s]",
++                            harvest_object.guid,
++                            harvest_object.id,
++                        )
+ 
+-                if record:
+-                    try:
+-                        # Save the fetch contents in the HarvestObject
+-                        harvest_object.content = record  # TODO move JSON stuff to record provider for Gisweb harvester
+-                        harvest_object.save()
+-                    except Exception as e:
++                        result = True
++                    else:
+                         self._save_object_error(
+-                            "Error saving harvest object for identifier [%s] [%r]"
+-                            % (identifier, e),
+-                            harvest_object,
++                            "Empty record for identifier %s" % identifier, harvest_object
+                         )
+-                        return False
++                        result = False
+ 
+-                    model.Session.commit()
+-
+-                    logger.debug(
+-                        "Record content saved for ID [%s], harvest object ID [%s]",
+-                        harvest_object.guid,
+-                        harvest_object.id,
+-                    )
+-
+-                    result = True
+-                else:
++                except (
++                    Exception
++                ) as e:  # Broad exception because of unpredictability of Exceptions
+                     self._save_object_error(
+-                        "Empty record for identifier %s" % identifier, harvest_object
++                        "Error getting the record with identifier [%s] from record provider"
++                        % identifier,
++                        harvest_object,
+                     )
++                    span.record_exception(e)
+                     result = False
+ 
+-            except (
+-                Exception
+-            ) as e:  # Broad exception because of unpredictability of Exceptions
+-                self._save_object_error(
+-                    "Error getting the record with identifier [%s] from record provider"
+-                    % identifier,
+-                    harvest_object,
+-                )
+-                result = False
+-
+-        logger.debug("Finished fetch_stage for harvest object [%s]", harvest_object.id)
+-
+-        return result
++            logger.debug("Finished fetch_stage for harvest object [%s]", harvest_object.id)
++            self._finalize_harvest_span(span, result)
++            return result
+ 
+     def import_stage(self, harvest_object):
+         """
+@@ -267,193 +312,201 @@ class CivityHarvester(HarvesterBase):
+                   need harvesting after all or False if there were errors.
+         """
+ 
+-        logger = logging.getLogger(__name__ + ".import_stage")
++        with tracer.start_as_current_span(
++            f"{self.__class__.__name__}.import_stage"
++        ) as span:
++            self._set_harvest_object_span_attributes(span, harvest_object)
++            logger = logging.getLogger(__name__ + ".import_stage")
+ 
+-        logger.debug("Starting import stage for harvest_object [%s]", harvest_object.id)
++            logger.debug("Starting import stage for harvest_object [%s]", harvest_object.id)
+ 
+-        self.setup_record_to_package_converter(
+-            harvest_object.source.url,
+-            self._get_harvest_config(harvest_object.source.config),
+-        )
++            self.setup_record_to_package_converter(
++                harvest_object.source.url,
++                self._get_harvest_config(harvest_object.source.config),
++            )
+ 
+-        status = self._get_object_extra(harvest_object, "status")
++            status = self._get_object_extra(harvest_object, "status")
++            self._set_span_attribute(span, "ckan.harvest.status", status)
+ 
+-        if status == "delete":
+-            # Delete package
+-            context = {
+-                "model": model,
+-                "session": model.Session,
+-                "user": self._get_user_name(),
+-            }
++            if status == "delete":
++                context = {
++                    "model": model,
++                    "session": model.Session,
++                    "user": self._get_user_name(),
++                }
+ 
+-            toolkit.get_action("package_delete")(
+-                context, {ID: harvest_object.package_id}
+-            )
+-            logger.info(
+-                "Deleted package {0} with guid {1}".format(
+-                    harvest_object.package_id, harvest_object.guid
++                toolkit.get_action("package_delete")(
++                    context, {ID: harvest_object.package_id}
+                 )
+-            )
+-
+-            return True
++                logger.info(
++                    "Deleted package {0} with guid {1}".format(
++                        harvest_object.package_id, harvest_object.guid
++                    )
++                )
++                self._finalize_harvest_span(span, True)
++                return True
+ 
+-        if harvest_object.content is None:
+-            self._save_object_error(
+-                "Empty content for object %s" % harvest_object.id,
+-                harvest_object,
+-                "Import",
+-            )
+-            return False
++            if harvest_object.content is None:
++                self._save_object_error(
++                    "Empty content for object %s" % harvest_object.id,
++                    harvest_object,
++                    "Import",
++                )
++                self._finalize_harvest_span(span, False)
++                return False
+ 
+-        try:
++            try:
+             # Determine datatype
+-            identifier_harvest_object = Identifier(harvest_object.guid)
+-            datatype = identifier_harvest_object.get_id_type()
+-
+-            if datatype == "dataset":
+-                # Build mapping from dataseries GUID to package ID for all active dataset_series in the database
+-                series_results = model.Session.query(model.PackageExtra.value, model.Package.id) \
+-                    .join(model.Package) \
+-                    .filter(model.PackageExtra.key == 'guid') \
+-                    .filter(model.Package.type == 'dataset_series') \
+-                    .filter(model.Package.state == 'active') \
+-                    .all()
+-                series_mapping = {guid: {"id": series_id} for guid, series_id in series_results}
+-                package_dict = self.record_to_package_converter.record_to_package(
+-                    harvest_object.guid, str(harvest_object.content), series_mapping=series_mapping
++                identifier_harvest_object = Identifier(harvest_object.guid)
++                datatype = identifier_harvest_object.get_id_type()
++                self._set_span_attribute(span, "ckan.harvest.datatype", datatype)
++
++                if datatype == "dataset":
++                    series_results = model.Session.query(model.PackageExtra.value, model.Package.id) \
++                        .join(model.Package) \
++                        .filter(model.PackageExtra.key == 'guid') \
++                        .filter(model.Package.type == 'dataset_series') \
++                        .filter(model.Package.state == 'active') \
++                        .all()
++                    series_mapping = {guid: {"id": series_id} for guid, series_id in series_results}
++                    package_dict = self.record_to_package_converter.record_to_package(
++                        harvest_object.guid, str(harvest_object.content), series_mapping=series_mapping
++                    )
++                else:
++                    package_dict = self.record_to_package_converter.record_to_package(
++                        harvest_object.guid, str(harvest_object.content)
++                    )
++                package_dict.setdefault("extras", []).append({"key": "guid", "value": identifier_harvest_object.get_id_value()})
++            except Exception as e:
++                logger.error(
++                    "Error converting record to package for identifier [%s] [%r]"
++                    % (harvest_object.id, e)
+                 )
+-            else:
+-                package_dict = self.record_to_package_converter.record_to_package(
+-                    harvest_object.guid, str(harvest_object.content)
++                self._save_object_error(
++                    "Error converting record to package for identifier [%s] [%r]"
++                    % (harvest_object.id, e),
++                    harvest_object,
+                 )
+-            package_dict.setdefault("extras", []).append({"key": "guid", "value": identifier_harvest_object.get_id_value()})
+-        except Exception as e:
+-            logger.error(
+-                "Error converting record to package for identifier [%s] [%r]"
+-                % (harvest_object.id, e)
+-            )
+-            self._save_object_error(
+-                "Error converting record to package for identifier [%s] [%r]"
+-                % (harvest_object.id, e),
+-                harvest_object,
+-            )
+-            return False
++                span.record_exception(e)
++                self._finalize_harvest_span(span, False)
++                return False
+ 
+-        if not package_dict:
+-            return False
++            if not package_dict:
++                self._finalize_harvest_span(span, False)
++                return False
+ 
+         # TODO Doesn't this mean a new name will be generated for each update? This should be a new which never ever
+         #  changes as long as the record in the harvester source does not change
+-        logger.info(
+-            "Generating package name from title [{}]".format(package_dict["title"])
+-        )
+-        try:
+-            if status == "new" and "name" not in package_dict:
+-                try:
+-                    package_dict["name"] = self._gen_new_name(package_dict["title"])
+-                    logger.info(
+-                        "Generated package name from title [{}]: [{}]".format(
+-                            package_dict.get("title", "UNKNOWN TITLE"),
+-                            package_dict["name"]
++            logger.info(
++                "Generating package name from title [{}]".format(package_dict["title"])
++            )
++            try:
++                if status == "new" and "name" not in package_dict:
++                    try:
++                        package_dict["name"] = self._gen_new_name(package_dict["title"])
++                        logger.info(
++                            "Generated package name from title [{}]: [{}]".format(
++                                package_dict.get("title", "UNKNOWN TITLE"),
++                                package_dict["name"]
++                            )
+                         )
+-                    )
+-                except TypeError:
+-                    logger.error(
+-                        "TypeError: error generating package name. Package title is not a string: [%s]",
+-                        str(package_dict.get("title"))
+-                    )
+-                    self._save_object_error(
+-                        "TypeError: error generating package name. Package title [%s] is not a string." %
+-                        str(package_dict.get("title")),
+-                        harvest_object,
+-                    )
+-                    return False
++                    except TypeError:
++                        logger.error(
++                            "TypeError: error generating package name. Package title is not a string: [%s]",
++                            str(package_dict.get("title"))
++                        )
++                        self._save_object_error(
++                            "TypeError: error generating package name. Package title [%s] is not a string." %
++                            str(package_dict.get("title")),
++                            harvest_object,
++                        )
++                        self._finalize_harvest_span(span, False)
++                        return False
+ 
+-        except Exception as e:
+-            logger.exception("Unexpected error during name generation for package")
+-            self._save_object_error(str(e), harvest_object)
+-            return False
++            except Exception as e:
++                logger.exception("Unexpected error during name generation for package")
++                self._save_object_error(str(e), harvest_object)
++                span.record_exception(e)
++                self._finalize_harvest_span(span, False)
++                return False
+ 
+ 
+         # Fallback: ensure name is always set
+-        if "name" not in package_dict:
+-            package_dict["name"] = self._gen_new_name(package_dict["title"])
++            if "name" not in package_dict:
++                package_dict["name"] = self._gen_new_name(package_dict["title"])
+ 
+ 
+         # Unless already set by an extension, get the owner organization (if any)
+         # from the harvest source dataset
+-        if not package_dict.get("owner_org"):
+-            source_dataset = model.Package.get(harvest_object.source.id)
+-            if source_dataset.owner_org:
+-                package_dict["owner_org"] = source_dataset.owner_org
++            if not package_dict.get("owner_org"):
++                source_dataset = model.Package.get(harvest_object.source.id)
++                if source_dataset.owner_org:
++                    package_dict["owner_org"] = source_dataset.owner_org
+ 
+-        context = {
+-            "user": self._get_user_name(),
+-            "return_id_only": True,
+-            "ignore_auth": True,
+-        }
++            context = {
++                "user": self._get_user_name(),
++                "return_id_only": True,
++                "ignore_auth": True,
++            }
+ 
+         # Variable for the new or existing package ID
+-        package_id = None
++            package_id = None
+ 
+         # Separate Update of package and resources, for trigger reasons
+-        resources = package_dict.pop("resources")
++            resources = package_dict.pop("resources")
+ 
+-        if status == "new":
+-            # If a package ID has not been assigned by the RecordToPackageConverter...
+-            if ID not in package_dict.keys():
+-                # ... we need to explicitly provide a new package ID.
+-                package_dict[ID] = str(uuid.uuid4())
++            if status == "new":
++                if ID not in package_dict.keys():
++                    package_dict[ID] = str(uuid.uuid4())
+ 
+-            # Save reference to the package on the object
+-            harvest_object.package_id = package_dict[ID]
+-            harvest_object.current = True
+-            harvest_object.add()
++                harvest_object.package_id = package_dict[ID]
++                harvest_object.current = True
++                harvest_object.add()
+ 
+-            # Now safely defer and flush
+-            model.Session.execute(
+-                "SET CONSTRAINTS harvest_object_package_id_fkey DEFERRED"
+-            )
+-            model.Session.flush()
++                model.Session.execute(
++                    "SET CONSTRAINTS harvest_object_package_id_fkey DEFERRED"
++                )
++                model.Session.flush()
+ 
+-            # Create the package in CKAN
+-            package_id = self._create_or_update_package(
+-                package_dict, "create", context, harvest_object
+-            )
++                package_id = self._create_or_update_package(
++                    package_dict, "create", context, harvest_object
++                )
+ 
+-        elif status == "change":
+-            # Updating existing package, if all is well...
+-            package_dict[ID] = harvest_object.package_id
++            elif status == "change":
++                package_dict[ID] = harvest_object.package_id
+ 
+-            # Update existing package
+-            package_id = self._create_or_update_package(
+-                package_dict, "update", context, harvest_object
+-            )
++                package_id = self._create_or_update_package(
++                    package_dict, "update", context, harvest_object
++                )
+ 
+         # In case of success (package_id is defined in that case), create the resources
+-        if package_id:
+-            if not self._create_resources(
+-                resources, package_id, package_dict["title"], context, harvest_object
+-            ):
++            if package_id:
++                self._set_span_attribute(span, "ckan.harvest.package_id", package_id)
++                if not self._create_resources(
++                    resources, package_id, package_dict["title"], context, harvest_object
++                ):
++                    self._finalize_harvest_span(span, False)
++                    return False
++            else:
++                self._finalize_harvest_span(span, False)
+                 return False
+-        else:
+-            return False
+ 
+         # 🔧 Clear previous current HarvestObjects with the same GUID
+-        model.Session.query(HarvestObject).filter(
+-            HarvestObject.guid == harvest_object.guid,
+-            HarvestObject.current == True,
+-            HarvestObject.id != harvest_object.id
+-        ).update({"current": False}, synchronize_session=False)
++            model.Session.query(HarvestObject).filter(
++                HarvestObject.guid == harvest_object.guid,
++                HarvestObject.current == True,
++                HarvestObject.id != harvest_object.id
++            ).update({"current": False}, synchronize_session=False)
+ 
+         # ✅ Mark this object as current
+-        harvest_object.current = True
+-        harvest_object.add()
++            harvest_object.current = True
++            harvest_object.add()
+ 
+-        model.Session.commit()
++            model.Session.commit()
+ 
+-        logger.debug("Finished import stage for harvest_object [%s]", harvest_object.id)
+-        return True
++            logger.debug("Finished import stage for harvest_object [%s]", harvest_object.id)
++            self._finalize_harvest_span(span, True)
++            return True
+ 
+ 
+     def _create_or_update_package(
+@@ -638,4 +691,3 @@ class CivityHarvester(HarvesterBase):
+             result = "template"
+ 
+         return result
+-
+diff --git a/requirements.txt b/requirements.txt
+index 93d1569..eb4f705 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -5,4 +5,5 @@
+ rdflib~=7.6.0
+ setuptools~=80.10.2
+ nose~=1.3.7
+-requests~=2.32.3
+\ No newline at end of file
++requests~=2.32.3
++opentelemetry-api==1.41.0

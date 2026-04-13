@@ -1,0 +1,52 @@
+diff --git a/ckanext/gdi_userportal/plugin.py b/ckanext/gdi_userportal/plugin.py
+index ac4ac98..ced432e 100644
+--- a/ckanext/gdi_userportal/plugin.py
++++ b/ckanext/gdi_userportal/plugin.py
+@@ -19,18 +19,8 @@ from ckanext.gdi_userportal.logic.action.get import (
+ from ckanext.gdi_userportal.logic.auth.get import config_option_show
+ from ckanext.gdi_userportal.validation import scheming_isodatetime_flex
+ 
+-from opentelemetry import metrics
+-from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+-from opentelemetry.sdk.metrics import MeterProvider
+-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+ from opentelemetry.instrumentation.flask import FlaskInstrumentor
+ 
+-from opentelemetry import trace
+-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+-from opentelemetry.sdk.trace import TracerProvider
+-from opentelemetry.sdk.trace.export import BatchSpanProcessor
+-
+ import logging
+ 
+ log = logging.getLogger(__name__)
+@@ -44,19 +34,6 @@ RESOURCE_TRANSLATED_SEARCH_EXTRA_FIELDS = ("res_extras_conforms_to", "resource_c
+ ACCESS_SERVICE_TRANSLATED_SEARCH_SOURCE = "res_extras_access_services"
+ 
+ 
+-def setup_opentelemetry():
+-    resource = Resource(attributes={SERVICE_NAME: "ckan"})
+-
+-    traceProvider = TracerProvider(resource=resource)
+-    processor = BatchSpanProcessor(OTLPSpanExporter())
+-    traceProvider.add_span_processor(processor)
+-    trace.set_tracer_provider(traceProvider)
+-
+-    reader = PeriodicExportingMetricReader(OTLPMetricExporter())
+-    provider = MeterProvider(resource=resource, metric_readers=[reader])
+-    metrics.set_meter_provider(provider)
+-
+-
+ class GdiUserPortalPlugin(plugins.SingletonPlugin):
+     plugins.implements(plugins.IConfigurer)
+     plugins.implements(plugins.IFacets, inherit=True)
+@@ -480,7 +457,7 @@ class GdiUserPortalPlugin(plugins.SingletonPlugin):
+ 
+     # IConfigurable
+     def configure(self, config):
+-        setup_opentelemetry()
++        pass
+ 
+     # IMiddleware
+     def make_middleware(self, app, config):
