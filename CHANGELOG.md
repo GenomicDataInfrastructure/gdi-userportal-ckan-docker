@@ -25,6 +25,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - fix(version) version 24 instead of 23 by @Hans-christian in 6313ff0
 
+## [v1.3.42] - 2026-04-13
+
+### Changed
+- Update ckanext-dcat version in Dockerfile by @Hans-Christian in b82da38
+- Bump userportal tag to v1.11.22 by @Hans-christian in 408d29d
+- Add OTLP gRPC exporter to CKAN image by @Hans-christian in aef596f
+- chore(deps): update docker/build-push-action digest to bcafcac by @Renovate Bot in 9f72735
+- chore(deps): update oras-project/setup-oras action to v2 by @Renovate Bot in cd32427
+- chore: add zizmor for automated scan and mitigation for current issues by @Kacem Bechka in 8685f83
+- doc: update CHANGELOG.md for v1.3.41 by @LNDS-Sysadmins in df9862b
+
+
+### Fixed
+- fix (OTEL) fix gpcr exporter by @Hans-christian in 39eaa1d
+- fix: actions by @Kacem Bechka in 5b08c9b
+
 
 ## [v1.3.41] - 2026-03-24
 
