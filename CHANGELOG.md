@@ -12,6 +12,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.43] - 2026-04-14
+
+### Added
+- feat(OTEL) Bump userportal extension to support GPCR by @Hans-christian in 8472edf
+
+
+### Changed
+- chore(deps): update actions/cache digest to 27d5ce7 by @Renovate Bot in c15563d
+
+
+### Fixed
+- fix(version) version 24 instead of 23 by @Hans-christian in 6313ff0
+
 ## [v1.3.42] - 2026-04-13
 
 ### Changed
