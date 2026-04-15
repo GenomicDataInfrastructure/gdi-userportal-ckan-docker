@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v1.3.43] - 2026-04-14
 
 ### Added
-- feat(OTEL) Bump userportal extension to support gpcr by @Hans-christian in 8472edf
+- feat(OTEL) Bump userportal extension to support GPCR by @Hans-christian in 8472edf
 
 
 ### Changed
