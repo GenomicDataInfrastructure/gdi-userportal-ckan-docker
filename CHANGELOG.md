@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.46] - 2026-04-16
+
+### Changed
+- Patch FDP extension by @Hans-christian in 241f146
+- Feat(harvester) be able to run test harvester in prod by @Hans-christian in dfb0c10
+- Update subproject commit reference for ckanext-gdi-userportal by @Kacem Bechka in 891620c
+
+
 ## [v1.3.44] - 2026-04-15
 
 ### Changed
