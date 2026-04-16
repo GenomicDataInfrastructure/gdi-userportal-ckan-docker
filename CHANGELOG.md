@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.3.45] - 2026-04-16
+
+### Changed
+- Update Dockerfile by @Kacem Bechka in 8365442
+- doc: update CHANGELOG.md for v1.3.44 by @LNDS-Sysadmins in 2c08a01
+
+
 ## [v1.3.44] - 2026-04-15
 
 ### Changed
