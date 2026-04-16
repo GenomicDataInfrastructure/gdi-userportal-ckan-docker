@@ -38,6 +38,9 @@ RUN set -eux; \
             python -m pip install --no-cache-dir -r "${req_file}"; \
         fi; \
     done; \
+    python -m pip install --no-cache-dir \
+        pytest-ckan \
+        factory-boy>=2; \
     python -m pip check
 
 USER root
