@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM ckan/ckan-base:2.11.4
+FROM ckan/ckan-base:2.11.5
 
 USER root
 RUN chown -R ckan:ckan-sys ${APP_DIR}
