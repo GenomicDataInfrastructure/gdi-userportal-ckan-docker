@@ -58,8 +58,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY config/supervisord.conf /etc/supervisord.d/ckan.conf
 COPY config/crontab /etc/cron.d/ckan-cron
 
-# Running cron as non-root user and give permission to ckan user
-RUN chmod gu+rw /var/run && \
+# Cron needs a writable pid directory at runtime.
+# Container Apps runs this image as the ckan user, so replace the /var/run
+# symlink with a real directory owned by ckan before installing the crontab.
+RUN rm -rf /var/run && \
+    mkdir -p /var/run && \
+    chown ckan:ckan-sys /var/run && \
+    chmod 0775 /var/run && \
     chmod gu+s /usr/sbin/cron && \
     crontab -u ckan /etc/cron.d/ckan-cron
 
