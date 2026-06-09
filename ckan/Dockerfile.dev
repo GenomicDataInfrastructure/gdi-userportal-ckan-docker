@@ -53,13 +53,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY config/supervisord.conf /etc/supervisord.d/ckan.conf
 COPY config/crontab /etc/cron.d/ckan-cron
 
-# Cron needs a writable pid directory at runtime.
-# Container Apps runs this image as the ckan user, so replace the /var/run
-# symlink with a real directory owned by ckan before installing the crontab.
-RUN rm -rf /var/run && \
-    mkdir -p /var/run && \
-    chown ckan:ckan-sys /var/run && \
-    chmod 0775 /var/run && \
+RUN install -d -o ckan -g ckan-sys -m 0775 /var/run/ckan && \
+    touch /var/run/ckan/crond.pid /var/run/ckan/crond.reboot && \
+    chown ckan:ckan-sys /var/run/ckan/crond.pid /var/run/ckan/crond.reboot && \
+    ln -sfn /var/run/ckan/crond.pid /var/run/crond.pid && \
+    ln -sfn /var/run/ckan/crond.reboot /var/run/crond.reboot && \
     chmod gu+s /usr/sbin/cron && \
     crontab -u ckan /etc/cron.d/ckan-cron
 
