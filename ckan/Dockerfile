@@ -58,13 +58,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY config/supervisord.conf /etc/supervisord.d/ckan.conf
 COPY config/crontab /etc/cron.d/ckan-cron
 
-RUN install -d -o ckan -g ckan-sys -m 0775 /var/run/ckan && \
-    touch /var/run/ckan/crond.pid /var/run/ckan/crond.reboot && \
-    chown ckan:ckan-sys /var/run/ckan/crond.pid /var/run/ckan/crond.reboot && \
-    ln -sfn /var/run/ckan/crond.pid /var/run/crond.pid && \
-    ln -sfn /var/run/ckan/crond.reboot /var/run/crond.reboot && \
-    chmod gu+s /usr/sbin/cron && \
-    crontab -u ckan /etc/cron.d/ckan-cron
+RUN crontab -u ckan /etc/cron.d/ckan-cron
 
 COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
