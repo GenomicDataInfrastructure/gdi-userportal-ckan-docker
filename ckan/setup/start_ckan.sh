@@ -57,8 +57,12 @@ UWSGI_OPTS="--socket /tmp/uwsgi.sock \
 if [ $? -eq 0 ]
 then
     supervisord --configuration /etc/supervisord.d/ckan.conf & 
-    # Start uwsgi
-    uwsgi $UWSGI_OPTS
+    # Start uwsgi as ckan while keeping the container runtime root for cron.
+    if command -v runuser >/dev/null 2>&1; then
+        runuser -u ckan -- sh -lc "uwsgi $UWSGI_OPTS"
+    else
+        su -s /bin/sh ckan -c "uwsgi $UWSGI_OPTS"
+    fi
 else
   echo "[prerun] failed...not starting CKAN."
 fi
