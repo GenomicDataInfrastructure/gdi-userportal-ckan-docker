@@ -75,10 +75,15 @@ if [ "$USE_HTTPS_FOR_DEV" = true ] ; then
     CKAN_OPTIONS="$CKAN_OPTIONS -C unsafe.cert -K unsafe.key"
 fi
 
+supervisord --configuration /etc/supervisord.d/ckan.conf
+
 # Start the development server as the ckan user with automatic reload
 while true; do
-    supervisord --configuration /etc/supervisord.d/ckan.conf & 
-    $CKAN_RUN $CKAN_OPTIONS
+    if command -v runuser >/dev/null 2>&1; then
+        runuser -u ckan -- sh -lc "$CKAN_RUN $CKAN_OPTIONS"
+    else
+        su -s /bin/sh ckan -c "$CKAN_RUN $CKAN_OPTIONS"
+    fi
     echo Exit with status $?. Restarting.
     sleep 2
 done
