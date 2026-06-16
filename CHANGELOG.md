@@ -15,10 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v1.4.0] - 2026-06-10
 
 ### Changed
-- update postgress by @Hans-christian in 11f29a7
-- Use dedicated cron pid directory by @Hans-christian in 6464376
 - Fix PostgreSQL 18 volume mount by @Hans-christian in 0eccfa3
-- Fix cron pid directory for Container Apps by @Hans-christian in 58a52ac
 - chore(deps): update astral-sh/setup-uv action to v8.2.0 by @Renovate Bot in 88654db
 - chore(deps): update actions/checkout digest to df4cb1c by @Renovate Bot in 5b15654
 - chore(deps): update actions/checkout action to v6.0.3 by @Renovate Bot in 58fcddb
@@ -31,12 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(deps): update oss-review-toolkit/ort-ci-github-action digest to 086d928 by @Renovate Bot in 40300e3
 - chore(deps): update aquasecurity/trivy-action action to v0.36.0 by @Renovate Bot in 613ff26
 - chore(deps): update astral-sh/setup-uv action to v8.1.0 by @Renovate Bot in 989f338
-- doc: update CHANGELOG.md for v1.3.46 by @LNDS-Sysadmins in 4a4ea45
-- doc: update CHANGELOG.md for v1.3.45 by @LNDS-Sysadmins in 2e08f18
 
 
 ### Fixed
-- Potential fix for pull request finding by @Hans-Christian in c641a81
 - chore: fix sonarcloud by @Kacem Bechka in 6f874d7
 - fix zizmor by @Kacem Bechka in b482126
 - chore:  fix sonar by @Kacem Bechka in 5c4b1e0
