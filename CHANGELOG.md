@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+
 ## [v1.4.1] - 2026-06-16
 
 ### Changed
@@ -20,6 +21,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Start supervisord once during CKAN startup by @Hans-christian in 80b3ff7
 - Fix supervisor user for harvest consumers by @Hans-christian in 145403a
 - Run cron from a root runtime by @Hans-christian in 7048504
+
+## [v1.4.0] - 2026-06-10
+
+### Changed
+- Fix PostgreSQL 18 volume mount by @Hans-christian in 0eccfa3
+- chore(deps): update astral-sh/setup-uv action to v8.2.0 by @Renovate Bot in 88654db
+- chore(deps): update actions/checkout digest to df4cb1c by @Renovate Bot in 5b15654
+- chore(deps): update actions/checkout action to v6.0.3 by @Renovate Bot in 58fcddb
+- chore(deps): update docker/metadata-action action to v6.1.0 by @Renovate Bot in 70f4a71
+- chore(deps): update docker/login-action action to v4.2.0 by @Renovate Bot in eeedfbf
+- chore(deps): update ckan/ckan-dev docker tag to v2.11.5 by @Renovate Bot in bb87548
+- chore(deps): update ckan/ckan-base docker tag to v2.11.5 by @Renovate Bot in af9b9e2
+- chore(deps): update docker/build-push-action digest to f9f3042 by @Renovate Bot in 0c54983
+- chore: update Azure deployment configuration and subproject reference by @Kacem Bechka in 060073f
+- chore(deps): update oss-review-toolkit/ort-ci-github-action digest to 086d928 by @Renovate Bot in 40300e3
+- chore(deps): update aquasecurity/trivy-action action to v0.36.0 by @Renovate Bot in 613ff26
+- chore(deps): update astral-sh/setup-uv action to v8.1.0 by @Renovate Bot in 989f338
+
+
+### Fixed
+- chore: fix sonarcloud by @Kacem Bechka in 6f874d7
+- fix zizmor by @Kacem Bechka in b482126
+- chore:  fix sonar by @Kacem Bechka in 5c4b1e0
 
 
 ## [v1.3.46] - 2026-04-16
