@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.4.1] - 2026-06-16
+
+### Changed
+- Bump userportal extension to v1.11.27 (#308) by @Hans-Christian in bfd9f82
+- Simplify cron setup in Dockerfiles by @Hans-christian in a8676de
+- Start supervisord once during CKAN startup by @Hans-christian in 80b3ff7
+- Fix supervisor user for harvest consumers by @Hans-christian in 145403a
+- Run cron from a root runtime by @Hans-christian in 7048504
+
+
 ## [v1.3.46] - 2026-04-16
 
 ### Changed
