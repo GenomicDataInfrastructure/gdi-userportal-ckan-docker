@@ -12,6 +12,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.4.2] - 2026-06-22
+
+### Changed
+- Patch-userportal by @Hans-christian in 1829bef
+- Update CHANGELOG.md for v1.4.0 by @Hans-Christian in 4093744
+- doc: update CHANGELOG.md for v1.4.1 by @LNDS-Sysadmins in 9a3b82c
+- doc: update CHANGELOG.md for v1.4.0 by @LNDS-Sysadmins in ff1ab9c
+
+
+### Fixed
+- patch submodule by @Hans-christian in fc6a51a
+
+
 
 ## [v1.4.1] - 2026-06-16
 
