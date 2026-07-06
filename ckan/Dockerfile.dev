@@ -7,7 +7,9 @@
 FROM ckan/ckan-dev:2.11.5
 
 USER root
-RUN chown -R ckan:ckan-sys ${APP_DIR}
+RUN chown -R ckan:ckan-sys ${APP_DIR} \
+    && chown -R ckan:ckan-sys /usr/local/lib/python3.10/site-packages \
+    && chown -R ckan:ckan-sys /usr/local/bin
 USER ckan
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -16,16 +18,16 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_SRC=${APP_DIR}/src
 
 RUN set -eux; \
-    python -m pip install --upgrade --no-cache-dir pip setuptools wheel; \
+    python -m pip install --upgrade --no-cache-dir pip 'setuptools<82' wheel; \
     python -m pip install --no-cache-dir \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.4.2#egg=ckanext-dcat \
         -e git+https://github.com/ckan/ckanext-dataset-series.git@v0.1.1#egg=ckanext-dataset-series \
         -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.2#egg=ckanext-harvest \
         'ckanext-scheming[requirements] @ git+https://github.com/ckan/ckanext-scheming.git@release-3.1.0' \
-        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.6.11#egg=ckanext-fairdatapoint \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.6.12#egg=ckanext-fairdatapoint \
         -e git+https://github.com/ckan/ckanext-fluent.git#egg=ckanext-fluent; \
     for requirement in \
-        ckanext-dcat \ 
+        ckanext-dcat \
         ckanext-dataset-series \
         ckanext-harvest \
         ckanext-fairdatapoint \
@@ -45,6 +47,7 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     supervisor \
+    libsqlite3-0=3.40.1-2+deb12u2 \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/log/ckan/std /var/log/supervisor /etc/supervisor/conf.d \
     && chown -R ckan:ckan-sys /var/log/ckan /var/log/supervisor /etc/supervisor/conf.d
@@ -59,11 +62,6 @@ COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
 COPY --chown=ckan-sys:ckan-sys setup/prerun.py ${APP_DIR}
 COPY --chown=ckan-sys:ckan-sys setup/start_ckan_development.sh ${APP_DIR}
-
-#CVE-2025-6965 (wait for ckan base to be updated: https://github.com/ckan/ckan-docker/issues/231)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends libsqlite3-0=3.40.1-2+deb12u2 \
-    && rm -rf /var/lib/apt/lists/*
 
 USER ckan
 
