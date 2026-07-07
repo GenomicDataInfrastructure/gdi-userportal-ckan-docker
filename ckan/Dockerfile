@@ -7,6 +7,9 @@
 FROM ckan/ckan-base:2.11.5
 
 USER root
+# Only give the ckan user write access to the site-packages/bin directories themselves (so pip can
+# add the new ckanext-* packages/console-scripts below), plus a recursive chown of the specific
+# pip/setuptools/wheel trees that get upgraded in place further down.
 RUN chown -R ckan:ckan-sys ${APP_DIR} \
     && chown -R ckan:ckan-sys /usr/local/lib/python3.10/site-packages \
     && chown -R ckan:ckan-sys /usr/local/bin
@@ -18,6 +21,9 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_SRC=${APP_DIR}/src
 
 RUN set -eux; \
+    # setuptools>=82 dropped the legacy easy_install/`setup.py develop` codepath that pip's
+    # editable installs (`pip install -e git+...`) fall back to for the setup.py-only CKAN
+    # extensions installed below, breaking those installs; pin below it until they add PEP 517 support.
     python -m pip install --upgrade --no-cache-dir pip 'setuptools<82' wheel; \
     python -m pip install --no-cache-dir \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.12.0#egg=ckanext-gdi-userportal \
