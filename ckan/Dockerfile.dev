@@ -42,7 +42,6 @@ USER root
 
 ### Install everything we need for the harvester
 # Install cron and supervisor
-# CVE-2025-6965 for libsqlite3-0 (wait for ckan base to be updated: https://github.com/ckan/ckan-docker/issues/231)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     supervisor \
