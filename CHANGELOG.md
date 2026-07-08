@@ -12,6 +12,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.4.3] - 2026-07-08
+
+### Changed
+- chore(deps): update astral-sh/setup-uv action to v8.3.1 by @Renovate Bot in ec7f6a0
+- chore(deps): update docker/build-push-action action to v7.3.0 by @Renovate Bot in 38938e8
+- Update release.yml by @Quinten in 0267a97
+- Update main.yml by @Quinten in 6a85ee7
+- Update trivy_db_cache.yml by @Quinten in 179f63c
+- chore(deps): update astral-sh/setup-uv action to v8.3.0 by @Renovate Bot in 29ad5ca
+- chore(deps): update docker/login-action action to v4.4.0 by @Renovate Bot in c745831
+- chore(deps): update docker/metadata-action action to v6.2.0 by @Renovate Bot in 71341b8
+- chore(deps): update docker/build-push-action digest to 53b7df9 by @Renovate Bot in 4d4ab7b
+- chore(deps): update actions/cache digest to 55cc834 by @Renovate Bot in c198a80
+- Clean up CHANGELOG.md for v1.4.2 by @Hans-Christian in 03a379d
+- chore(deps): update actions/cache action to v6 by @Renovate Bot in 6afc376
+- chore(deps): update actions/checkout action to v7 by @Renovate Bot in 7f73321
+- doc: update CHANGELOG.md for v1.4.2 by @LNDS-Sysadmins in cc85c6f
+
+
+### Removed
+- Bump versions, remove uri_label_extractory.py (#321) by @Quinten in 4d56bac
+
+
 ## [v1.4.2] - 2026-06-22
 
 ### Fixed
