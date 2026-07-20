@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.4.4] - 2026-07-08
+
+### Changed
+- Update ckanext-gdi-userportal by @Quinten in 189f390
+- doc: update CHANGELOG.md for v1.4.3 by @LNDS-Sysadmins in b173d7d
+
+
 ## [v1.4.3] - 2026-07-08
 
 ### Changed
