@@ -16,7 +16,7 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_SRC=${APP_DIR}/src
 
 RUN set -eux; \
-    python -m pip install --upgrade --no-cache-dir pip setuptools wheel; \
+    python -m pip install --upgrade --no-cache-dir pip "setuptools<82,>=44.1.0" wheel; \
     python -m pip install --no-cache-dir \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.14.0#egg=ckanext-gdi-userportal \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.5.0#egg=ckanext-dcat \
