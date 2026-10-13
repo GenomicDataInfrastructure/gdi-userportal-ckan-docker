@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.5.2] - 2026-10-08
+
+### Changed
+- Merge pull request #348 from GenomicDataInfrastructure/chore/bump-extension-versions by @Quinten in 12826a2
+- chore(deps): update oras-project/setup-oras action to v2.0.2 by @Renovate Bot in f2da02c
+- doc: update CHANGELOG.md for v1.5.1 by @LNDS-Sysadmins in 718ca7f
+
+
 ## [v1.5.1] - 2026-09-23
 
 ### Changed
