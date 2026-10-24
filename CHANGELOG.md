@@ -12,6 +12,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [v1.5.4] - 2026-10-24
+## [v1.5.5] - 2026-10-24
+
+### Changed
+- doc: update CHANGELOG.md for v1.5.4 by @LNDS-Sysadmins in d153c44
+- doc: update CHANGELOG.md for v1.5.3 by @LNDS-Sysadmins in d67cf96
+
+
+### Fixed
+- fix: upgrade Debian packages and PyJWT to clear CRITICAL CVEs in the CKAN image by @Bruno Pacheco in 669abf4
+- fix: let prerun.py see the CKAN extensions when it runs as root by @Bruno Pacheco in ae110d6
+
+
 
 ### Changed
 - chore: bump ckanext-gdi-userportal to v1.14.3 and ckanext-fairdatapoint to v1.7.4 by @Bruno Pacheco in d497433
