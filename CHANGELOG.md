@@ -12,6 +12,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [v1.5.4] - 2026-10-24
+
+### Changed
+- chore: bump ckanext-gdi-userportal to v1.14.3 and ckanext-fairdatapoint to v1.7.4 by @Bruno Pacheco in d497433
+- doc: update CHANGELOG.md for v1.5.2 by @LNDS-Sysadmins in 62c48a6
+
+
+### Fixed
+- fix: install the certifi pin from a hashed, wheel-only requirements file by @Bruno Pacheco in 96241f4
+- fix: pin certifi for eMudhra distrust, add release SBOM, GDI submodules by @Bruno Pacheco in 7fbf42b
+
+
 ## [v1.5.2] - 2026-10-08
 
 ### Changed
