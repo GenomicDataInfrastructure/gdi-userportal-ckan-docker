@@ -43,7 +43,18 @@ RUN set -eux; \
         factory-boy>=2; \
     python -m pip check
 
+# eMudhra/emSign distrust: certifi 2026.10.19 drops emSign ECC Root CA - G3.
+# Installed after every plugin requirements file so none can pull an older certifi back in.
+RUN set -eux; \
+    python -m pip install --no-cache-dir "certifi>=2026.10.19"; \
+    python -m pip check
+
 USER root
+
+# The base image's system-wide certifi is used by anything that runs as root (prerun.py, entrypoint scripts).
+RUN set -eux; \
+    python -m pip install --no-cache-dir --upgrade "certifi>=2026.10.19"; \
+    python -m pip check
 
 ### Install everything we need for the harvester
 # Install cron and supervisor. 
