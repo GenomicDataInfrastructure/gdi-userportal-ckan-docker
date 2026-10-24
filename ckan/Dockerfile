@@ -43,8 +43,8 @@ RUN set -eux; \
         factory-boy>=2; \
     python -m pip check
 
-# eMudhra/emSign distrust: certifi 2026.10.19 and later drop emSign ECC Root CA - G3.
-# Installed after every plugin requirements file so none can pull an older certifi back in.
+# Security pins (certifi, PyJWT and others; see requirements-pins.txt for the CVEs).
+# Installed after every plugin requirements file so none can pull an older version back in.
 COPY --chown=ckan-sys:ckan-sys requirements-pins.txt ${APP_DIR}/requirements-pins.txt
 RUN set -eux; \
     python -m pip install --no-cache-dir --only-binary :all: --require-hashes -r "${APP_DIR}/requirements-pins.txt"; \
