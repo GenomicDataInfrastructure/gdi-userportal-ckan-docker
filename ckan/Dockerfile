@@ -18,12 +18,12 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 RUN set -eux; \
     python -m pip install --upgrade --no-cache-dir pip "setuptools<82,>=44.1.0" wheel; \
     python -m pip install --no-cache-dir \
-        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.14.2#egg=ckanext-gdi-userportal \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.14.3#egg=ckanext-gdi-userportal \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.5.2#egg=ckanext-dcat \
         -e git+https://github.com/ckan/ckanext-dataset-series.git@v0.1.1#egg=ckanext-dataset-series \
         -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.2#egg=ckanext-harvest \
         'ckanext-scheming[requirements] @ git+https://github.com/ckan/ckanext-scheming.git@release-3.1.0' \
-        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.7.3#egg=ckanext-fairdatapoint \
+        -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.7.4#egg=ckanext-fairdatapoint \
         -e git+https://github.com/ckan/ckanext-fluent.git#egg=ckanext-fluent; \
     for requirement in \
         ckanext-gdi-userportal \
@@ -43,7 +43,19 @@ RUN set -eux; \
         factory-boy>=2; \
     python -m pip check
 
+# eMudhra/emSign distrust: certifi 2026.10.19 and later drop emSign ECC Root CA - G3.
+# Installed after every plugin requirements file so none can pull an older certifi back in.
+COPY --chown=ckan-sys:ckan-sys requirements-pins.txt ${APP_DIR}/requirements-pins.txt
+RUN set -eux; \
+    python -m pip install --no-cache-dir --only-binary :all: --require-hashes -r "${APP_DIR}/requirements-pins.txt"; \
+    python -m pip check
+
 USER root
+
+# The base image's system-wide certifi is used by anything that runs as root (prerun.py, entrypoint scripts).
+RUN set -eux; \
+    python -m pip install --no-cache-dir --only-binary :all: --require-hashes --upgrade -r "${APP_DIR}/requirements-pins.txt"; \
+    python -m pip check
 
 ### Install everything we need for the harvester
 # Install cron and supervisor. 

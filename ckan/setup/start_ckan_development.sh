@@ -47,8 +47,9 @@ then
     /bin/bash "/docker-entrypoint.d/00_install_local_extensions.sh"
 fi
 
-# Run the prerun script to init CKAN and create the default admin user
-python3 prerun.py
+# Run the prerun script to init CKAN and create the default admin user.
+# It runs as root, so point it at the ckan user's site-packages, where the image installs the extensions.
+PYTHONUSERBASE="${APP_DIR}/.local" python3 prerun.py
 
 # Run any startup scripts provided by images extending this one
 if [[ -d "/docker-entrypoint.d" ]]

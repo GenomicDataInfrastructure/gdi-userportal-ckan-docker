@@ -4,5 +4,13 @@
 
 [submodule "src/ckanext-gdi-userportal"]
 	path = src/ckanext-gdi-userportal
-	url = git@github.com:GenomicDataInfrastructure/ckanext-gdi-userportal.git
-    branch = main
+	url = git@github.com:GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git
+	branch = main
+[submodule "src/ckanext-fairdatapoint"]
+	path = src/ckanext-fairdatapoint
+	url = git@github.com:GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git
+	branch = main
+[submodule "src/ckanext-dcat"]
+	path = src/ckanext-dcat
+	url = git@github.com:GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git
+	branch = master
