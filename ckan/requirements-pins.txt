@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 PNED G.I.E.
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Installed after every extension's requirements, so these versions win.
+# certifi 2026.10.19 and later drop the distrusted emSign ECC Root CA - G3.
+certifi==2026.10.23 \
+    --hash=sha256:e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1
