@@ -58,8 +58,12 @@ RUN set -eux; \
     python -m pip check
 
 ### Install everything we need for the harvester
-# Install cron and supervisor. 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install cron and supervisor.
+# Upgrade the base image's Debian packages first: ckan-base lags behind Debian security updates.
+# Kernel headers are useless in a container and their fixes ship as new packages that upgrade skips, so remove them.
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get purge -y --auto-remove linux-headers-amd64 \
+    && apt-get install -y --no-install-recommends \
     cron \
     supervisor \
     && rm -rf /var/lib/apt/lists/* \
