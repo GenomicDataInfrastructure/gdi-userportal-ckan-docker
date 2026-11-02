@@ -48,10 +48,11 @@ the known ones), a pack listed twice, a main profile that is not enabled, a fiel
 differently without a declared precedence, or a pack that names an RDF profile that is not
 installed.
 
-**The order matters for three fields.** R8 adds subfields to `publisher`, `hdab` (telephone and
-opening hours of the contact point) and the resource field `access_services` (`documentation`).
-With both packs enabled the pack listed first decides: list `healthdcat_r8` first to keep those
-subfields. The main profile is independent of the order.
+**The order matters for four fields.** R8 defines `publisher`, `creator`, `hdab` and the resource
+field `access_services` differently: it adds subfields (telephone and opening hours of the contact
+point, `documentation`) and leaves out the HealthDCAT-AP publisher type and note, which only
+`gdi_current` has. With both packs enabled the pack listed first decides: list `healthdcat_r8`
+first to get the R8 versions. The main profile is independent of the order.
 
 **Solr.** The dataset fields of the enabled profiles are added to the Solr core at every start; see
 [Solr schema](#solr-schema).
