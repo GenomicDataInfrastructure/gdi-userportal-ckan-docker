@@ -24,7 +24,7 @@ mako==1.4.2 \
     --hash=sha256:7227a060ee3af55a493af61d73d6beef13044b81dba9586736c13945f09464ce \
     --hash=sha256:e70a2a4308952b33a21208bfd6725da79fae5a8c224578f8cfdeb60e5ace03df
 # sqlparse 0.5.4 (CVE-2026-54284, CVE-2026-59893, CVE-2026-71491)
-sqlparse==0.6.0 \
+sqlparse==0.6.1 \
     --hash=sha256:b861c0288ce2fa56209a9a6412d2e066ac664b3873b89c26c9d8415e8e32996f
 # wheel 0.45.1 from the base image (CVE-2026-24049)
 wheel==0.48.0 \
