@@ -40,7 +40,7 @@ ckanext.dcat.metadata_profiles = healthdcat_r8 gdi_current
 ckanext.dcat.metadata_profiles.main = gdi_current
 ckanext.dcat.metadata_profiles.<pack>.rdf_profiles = <RDF profile chain of the pack>
 ckanext.dcat.rdf.profiles = <chain of the main profile>      # the existing key, so every current path keeps working
-scheming.dataset_schemas = file:///srv/app/generated/dataset.yaml <dataset_series schema>
+scheming.dataset_schemas = file:///srv/app/generated/dataset.yaml <series schema of the first listed pack that has one>
 ```
 
 The container does not start when the configuration is wrong: an unknown pack (the message lists
@@ -216,5 +216,6 @@ not `harvester run-test`, which races the supervisor's consumers. Run tests on t
   keeps the first value and logs a warning.
 - The export selector `?metadata_profile=<pack>` of ADR 0001 is not implemented: exports use the main
   profile's chain, or a raw `?profiles=`.
-- Concept and ConceptScheme, `odrl:hasPolicy`, the licence type and the dataset series subfields of
-  R8 are not covered (see the R8 gap analysis).
+- Concept and ConceptScheme and the licence type are not covered (see the R8 gap analysis).
+  `odrl:hasPolicy` of a distribution is kept as the IRI of the policy (`resources[].has_policy`); the
+  policy itself is not modelled.
