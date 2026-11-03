@@ -217,9 +217,10 @@ not `harvester run-test`, which races the supervisor's consumers. Run tests on t
   optional IRI and a label per language). The Discovery Service still reads one value of each: with R8
   first it fails on a dataset until it is updated. Solr keeps the first value in `url` and `dcat_type`,
   and every type in `vocab_dcat_type`.
-- R8 fields that allow several values where `gdi_current` holds one and are not lists (`identifier`,
-  some data service properties) stay single-valued; the R8 profile keeps the first value and logs a
-  warning.
+- The title, description and endpoint description of a data service (`access_services`) hold a text per
+  language in the R8 pack.
+- R8 fields that allow several values where `gdi_current` holds one and are not lists (`identifier`) stay
+  single-valued; the R8 profile keeps the first value and logs a warning.
 - The fields of the R8 schema (dataset, dataset series, distribution) are ordered alphabetically by
   label, with the title and the description first (`field_order: alphabetical` in the pack manifest);
   `gdi_current` keeps its order. With both packs enabled the pack listed first decides.
