@@ -237,9 +237,10 @@ not `harvester run-test`, which races the supervisor's consumers. Run tests on t
   language in the R8 pack.
 - R8 fields that allow several values where `gdi_current` holds one and are not lists (`identifier`) stay
   single-valued; the R8 profile keeps the first value and logs a warning.
-- The fields of the R8 schema (dataset, dataset series, distribution) are ordered alphabetically by
-  label, with the title and the description first (`field_order: alphabetical` in the pack manifest);
-  `gdi_current` keeps its order. With both packs enabled the pack listed first decides.
+- The fields of the schemas (dataset, dataset series, distribution, data service) are ordered
+  alphabetically by label, with the title and the description first (`field_order: alphabetical` in the
+  pack manifests of `gdi_current` and `healthdcat_r8`). Nested entities (agents, contact point, ...) keep
+  the order of the model. With both packs enabled the pack listed first decides.
 - `CKANEXT__GDI_USERPORTAL__SHOW_EMPTY_PROPERTIES=true` makes the dataset and distribution pages list
   every property of the schema, with a dash for the empty ones. It is for looking at what the schema,
   the form and a harvest can hold, and is off by default.
