@@ -48,12 +48,12 @@ the known ones), a pack listed twice, a main profile that is not enabled, a fiel
 differently without a declared precedence, or a pack that names an RDF profile that is not
 installed.
 
-**The order matters for eight fields.** R8 holds the properties of the R8 model and nothing else, and
+**The order matters for nine fields.** R8 holds the properties of the R8 model and nothing else, and
 defines `contact`, `spatial_coverage`, `publisher`, `creator`, `qualified_attribution`,
-`was_generated_by`, `hdab` and the resource field `access_services` differently from `gdi_current`: a
+`was_generated_by`, `hdab`, `qualified_relation` and the resource field `access_services` differently from `gdi_current`: a
 contact point with an email and one contact page, a location without a label, plain agents (a name and
 a type, and for the health agents a contact point with several emails, contact pages and telephones),
-an activity with a label and a type, and the properties of a data service only. What only
+an activity with a label and a type, a relationship with several relations and roles, and the properties of a data service only. What only
 `gdi_current` has (the HealthDCAT-AP publisher type and note, the dataset license, the retention
 period of a distribution, the identifier and country of an agent, the name of a contact point, the
 label of a location) is left out of R8. With both packs enabled the pack listed first decides: list
