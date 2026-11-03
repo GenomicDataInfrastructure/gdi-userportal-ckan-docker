@@ -19,6 +19,7 @@ Set these in `.env` (or the environment of the CKAN container) and recreate the 
 |---|---|---|
 | `GDI_METADATA_PROFILES` | Pack names separated by commas and/or whitespace. **The order is the precedence order**: the first pack wins where two packs define a field differently. | unset or empty: `gdi_current` |
 | `GDI_METADATA_MAIN_PROFILE` | The deployment's main profile: used by a harvest source that names none, and as the default RDF chain. Must be one of the enabled packs. | the first enabled pack |
+| `GDI_METADATA_FORM_LANGUAGES` | The languages the edit form offers for the multilingual fields (titles, descriptions, keywords, agent names, ...), in this order, separated by commas and/or whitespace, for datasets, distributions and dataset series. The main language of the plain title and description, and the fallback of a text, is a separate CKAN setting, `CKAN__LOCALE_DEFAULT`; keep it equal to the first form language (the generator warns when it is not). | unset or empty: `en nl` |
 
 ```
 GDI_METADATA_PROFILES=gdi_current                    # the existing model (the default)
