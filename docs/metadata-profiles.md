@@ -48,11 +48,14 @@ the known ones), a pack listed twice, a main profile that is not enabled, a fiel
 differently without a declared precedence, or a pack that names an RDF profile that is not
 installed.
 
-**The order matters for four fields.** R8 defines `publisher`, `creator`, `hdab` and the resource
-field `access_services` differently: it adds subfields (telephone and opening hours of the contact
-point, `documentation`) and leaves out the HealthDCAT-AP publisher type and note, which only
-`gdi_current` has. With both packs enabled the pack listed first decides: list `healthdcat_r8`
-first to get the R8 versions. The main profile is independent of the order.
+**The order matters for seven fields.** R8 holds the properties of the R8 model and nothing else, and
+defines `contact`, `publisher`, `creator`, `qualified_attribution`, `was_generated_by`, `hdab` and the
+resource field `access_services` differently from `gdi_current`: one contact page per contact point,
+plain agents (a name and a type, and a contact point for the health agents), an activity with a label
+and a type, and the properties of a data service only. What only `gdi_current` has (the HealthDCAT-AP
+publisher type and note, the dataset license, the retention period of a distribution, the identifier
+and country of an agent) is left out of R8. With both packs enabled the pack listed first decides:
+list `healthdcat_r8` first to get the R8 versions. The main profile is independent of the order.
 
 **Plugin order.** `gdi_userportal` has to be listed before `scheming_datasets` in `ckan.plugins`
 (`CKAN__PLUGINS`). CKAN gives the plugin listed first the precedence for templates, and the
