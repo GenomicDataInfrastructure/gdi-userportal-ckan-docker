@@ -212,12 +212,20 @@ not `harvester run-test`, which races the supervisor's consumers. Run tests on t
 
 ## Known limits
 
-- The landing page and the type of a dataset are lists in the R8 pack (R8 gives them 0..*), and the
-  Discovery Service still reads one value of each: with R8 first it fails on a dataset until it is
-  updated. Solr keeps the first value in `url` and `dcat_type`, and every type in `vocab_dcat_type`.
+- The landing page and the type of a dataset, and the access URL, the download URL and the rights of a
+  distribution, are lists in the R8 pack (R8 gives them 0..*; the rights are a list of statements with an
+  optional IRI and a label per language). The Discovery Service still reads one value of each: with R8
+  first it fails on a dataset until it is updated. Solr keeps the first value in `url` and `dcat_type`,
+  and every type in `vocab_dcat_type`.
 - R8 fields that allow several values where `gdi_current` holds one and are not lists (`identifier`,
-  the access and download URL and the rights of a distribution) stay single-valued; the R8 profile
-  keeps the first value and logs a warning.
+  some data service properties) stay single-valued; the R8 profile keeps the first value and logs a
+  warning.
+- The fields of the R8 schema (dataset, dataset series, distribution) are ordered alphabetically by
+  label, with the title and the description first (`field_order: alphabetical` in the pack manifest);
+  `gdi_current` keeps its order. With both packs enabled the pack listed first decides.
+- `CKANEXT__GDI_USERPORTAL__SHOW_EMPTY_PROPERTIES=true` makes the dataset and distribution pages list
+  every property of the schema, with a dash for the empty ones. It is for looking at what the schema,
+  the form and a harvest can hold, and is off by default.
 - The export selector `?metadata_profile=<pack>` of ADR 0001 is not implemented: exports use the main
   profile's chain, or a raw `?profiles=`.
 - Concept and ConceptScheme and the licence type are not covered (see the R8 gap analysis).
