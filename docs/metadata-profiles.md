@@ -212,8 +212,11 @@ not `harvester run-test`, which races the supervisor's consumers. Run tests on t
 
 ## Known limits
 
-- R8 fields that allow several values where `gdi_current` holds one (`identifier`, `dcat_type`, the
-  landing page, the access and download URL of a distribution) stay single-valued; the R8 profile
+- The landing page and the type of a dataset are lists in the R8 pack (R8 gives them 0..*), and the
+  Discovery Service still reads one value of each: with R8 first it fails on a dataset until it is
+  updated. Solr keeps the first value in `url` and `dcat_type`, and every type in `vocab_dcat_type`.
+- R8 fields that allow several values where `gdi_current` holds one and are not lists (`identifier`,
+  the access and download URL and the rights of a distribution) stay single-valued; the R8 profile
   keeps the first value and logs a warning.
 - The export selector `?metadata_profile=<pack>` of ADR 0001 is not implemented: exports use the main
   profile's chain, or a raw `?profiles=`.
