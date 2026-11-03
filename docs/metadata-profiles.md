@@ -54,8 +54,15 @@ point, `documentation`) and leaves out the HealthDCAT-AP publisher type and note
 `gdi_current` has. With both packs enabled the pack listed first decides: list `healthdcat_r8`
 first to get the R8 versions. The main profile is independent of the order.
 
-**Solr.** The dataset fields of the enabled profiles are added to the Solr core at every start; see
-[Solr schema](#solr-schema).
+**Plugin order.** `gdi_userportal` has to be listed before `scheming_datasets` in `ckan.plugins`
+(`CKAN__PLUGINS`). CKAN gives the plugin listed first the precedence for templates, and the
+dataset, series and distribution pages only show the properties that have a value, without CKAN's
+bookkeeping rows, through templates that replace the ones of scheming. In the other order the pages
+still work, but show the scheming defaults: empty rows, raw language maps and the dump of every
+key of a distribution.
+
+**Solr.** The Solr schema is one static superset (`solr/schema.xml`); nothing is generated for it
+and enabling or disabling a pack needs no reindex by itself.
 
 ### Development stack
 
