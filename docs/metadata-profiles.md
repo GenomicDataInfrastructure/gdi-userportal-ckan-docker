@@ -192,9 +192,24 @@ Details and the merge rules are in `src/ckanext-gdi-userportal/ckanext/gdi_userp
   Solr schema removal. Values saved while a profile was enabled stay in the database until pruned.
 - **FDP sources saved with a profile the rollback retired** fail their jobs until edited; the prune
   dry run lists them.
-- Checked on the dev stack: with R8 enabled and an R8 dataset stored, switching back to
-  `gdi_current` only leaves CKAN, the search index and the Discovery Service search working, and the
-  R8 values remain in the database until pruned (they do not show in `package_show`).
+- Datasets of a source whose profile is no longer enabled are hidden, not removed (see
+  *Datasets of a profile that is not enabled*); enable the profile again and they are back.
+
+## Datasets of a profile that is not enabled
+
+Profiles can be added and removed without reharvesting or pruning. A harvest source names its profile
+with `metadata_profile` (see *Select a profile per harvest source*). When that profile is not in `GDI_METADATA_PROFILES`, the datasets the source harvested are hidden: they are
+left out of the search (so of every count, facet and organization or group listing built on it), and the
+dataset page and `package_show` answer "not found" to everyone but a sysadmin, who can still open and edit
+them by their URL. The data stays in the database untouched and comes back as soon as the profile is enabled
+again, with no reindex. A source without `metadata_profile` uses the main profile and is never hidden, and a
+dataset that no harvest source created is never hidden either: nothing says which profile it follows.
+
+- A series or dataset created by hand, or by an API client, has no source and stays visible, whatever it holds.
+- The datasets of a hidden source show as "0 datasets" on its harvest page, because that count is a search.
+- `package_list` still names a hidden dataset: it reads the database, not the search.
+- The RDF harvester (`dcat_rdf`) does not yet parse with the chain of the profile a source names; it uses the
+  main profile's. The key only decides what is hidden there.
 
 ## Verify a deployment
 
