@@ -72,11 +72,12 @@ key of a distribution.
 
 ### Development stack
 
-The dev compose mounts a named volume at `/srv/app`, so `start_ckan_development.sh` and `ckan.ini`
-inside the container are the volume's copies, **not** the ones the image was built with. Rebuilding
-the image does not apply an edit of the start script. To test one, bind-mount the working-tree
-script over `/srv/app/start_ckan_development.sh` with a compose override (kept outside the repo),
-and recreate the container. Do not use `down -v`: it also deletes the dev database.
+The dev compose mounts a named volume at `/srv/app`, so `ckan.ini` inside the container is the
+volume's copy, not the one the image was built with. The start script is the exception: the compose
+file bind-mounts `ckan/setup/start_ckan_development.sh` over the volume's copy, so a recreate always
+runs the script of the checkout, including the generator and the Solr sync. A volume that predates
+that mount keeps its old start script until the container is recreated once with it. Do not use
+`down -v`: it also deletes the dev database.
 
 ## Select a profile per harvest source
 
