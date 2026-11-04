@@ -15,15 +15,43 @@ env:
   IMAGE_NAME: ghcr.io/genomicdatainfrastructure/gdi-userportal-ckan-docker
 
 jobs:
-  fetch-and-scan:
+  # The newest release of each of the two newest minor versions, e.g. 1.9.3 and 1.8.7
+  select-releases:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       packages: read
+    outputs:
+      tags: ${{ steps.latest_tags.outputs.tags }}
     steps:
-      - name: Setup Docker
-        run: sudo service docker start
+      - name: List the image tags and pick the latest two minor versions
+        id: latest_tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Every page of versions, only release tags (1.2.3), not the sha-... or branch tags
+          TAGS=$(gh api --paginate "/orgs/genomicdatainfrastructure/packages/container/gdi-userportal-ckan-docker/versions" \
+            --jq '.[].metadata.container.tags[]' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -rV)
 
+          # The newest tag of each minor version, newest minor first, two of them
+          LATEST=$(echo "$TAGS" | awk -F. '!seen[$1"."$2]++' | head -n 2)
+          if [[ -z "$LATEST" ]]; then
+            echo "No release tags found"
+            exit 1
+          fi
+          echo "Tags to scan: $LATEST"
+
+          echo "tags=$(echo "$LATEST" | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+
+  scan-image:
+    runs-on: ubuntu-latest
+    needs: select-releases
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false # a finding in one image does not hide the other
+      matrix:
+        tag: ${{ fromJSON(needs.select-releases.outputs.tags) }}
+    steps:
       - name: Log in to the Container registry
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
@@ -31,44 +59,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: List Docker Image Tags and Fetch Latest Two
-        id: latest_tags
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          IMAGE="ghcr.io/genomicdatainfrastructure/gdi-userportal-ckan-docker"
-          echo "Fetching Docker image tags..."
-          RESPONSE=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/orgs/genomicdatainfrastructure/packages/container/gdi-userportal-ckan-docker/versions")
+      - name: Scan the image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ matrix.tag }}
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
 
-          # Log the response for debugging
-          echo "Response from curl: $RESPONSE"
-
-          # Extract tags and creation dates, then sort by creation date
-          TAGS_WITH_DATES=$(echo "$RESPONSE" | jq -r '.[] | .metadata.container.tags[] as $tag | select($tag | test("^sha-[a-z0-9]+$")) | "\($tag) \(.created_at)"' | sort -k2 -r)
-
-          # Get the latest tag from each of the latest two minor versions
-          LATEST_TAGS=$(echo "$TAGS_WITH_DATES" | awk '{split($1, a, "."); key=a[1] "." a[2]; if (!seen[key]++) print $1}' | head -n 2 | tr '\n' ' ')
-
-          # Print the results
-          echo "Tags fetched: $LATEST_TAGS"
-
-          echo "tags=$LATEST_TAGS" >> "$GITHUB_OUTPUT"
-
-      - name: Pull and Scan Docker Images with Trivy
-        env:
-          LATEST_PATCHES: ${{ steps.latest_tags.outputs.tags }}
-        run: |
-          IFS=' ' read -ra TAGS <<< "$LATEST_PATCHES"
-          for TAG in "${TAGS[@]}"
-          do
-            IMAGE_TAG="ghcr.io/genomicdatainfrastructure/gdi-userportal-ckan-docker:$TAG"
-            echo "Pulling $IMAGE_TAG"
-            docker pull $IMAGE_TAG || exit 1
-            echo "Scanning $IMAGE_TAG with Trivy"
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity CRITICAL,HIGH --exit-code 1 "$IMAGE_TAG" || exit 1
-
-          done
-
+  ort:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
       - name: OSS Review Toolkit (ORT) Analysis
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
