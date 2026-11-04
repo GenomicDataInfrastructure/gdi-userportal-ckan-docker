@@ -66,8 +66,8 @@ bookkeeping rows, through templates that replace the ones of scheming. In the ot
 still work, but show the scheming defaults: empty rows, raw language maps and the dump of every
 key of a distribution.
 
-**Solr.** The Solr schema is one static superset (`solr/schema.xml`); nothing is generated for it
-and enabling or disabling a pack needs no reindex by itself.
+**Solr.** The dataset fields of the enabled profiles are added to the Solr core at every start; see
+[Solr schema](#solr-schema).
 
 ### Development stack
 
@@ -210,6 +210,17 @@ dataset that no harvest source created is never hidden either: nothing says whic
 - `package_list` still names a hidden dataset: it reads the database, not the search.
 - The RDF harvester (`dcat_rdf`) does not yet parse with the chain of the profile a source names; it uses the
   main profile's. The key only decides what is hidden there.
+
+## Solr schema
+
+The Solr core is created once from the image and lives in a volume, so rebuilding the image does not
+update an existing core. At every start the start scripts run `solr_schema sync`: it adds the dataset
+fields of the enabled profiles to the core as explicit fields (multi valued when the field is a list)
+and applies changes of `solr/schema.xml` through the Solr Schema API.
+The sync never deletes a field and a failure does not stop CKAN (see the `[solr-schema]` lines of the
+container log). After it reports changes, run `sh bin/ckan search-index rebuild` so that datasets indexed
+earlier get the new fields. Preview with `--dry-run`; details in
+`src/ckanext-gdi-userportal/ckanext/gdi_userportal/profile_packs/README.md`.
 
 ## Verify a deployment
 
