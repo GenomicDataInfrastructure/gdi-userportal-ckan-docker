@@ -246,8 +246,9 @@ value, and save a warning on the harvest object: `Warning: imported without the 
 page. This applies to the dataset and to each distribution (and to subfields and resources at any depth).
 Only the value is dropped: a dataset that still does not validate (no title, an unknown organization) is
 rejected with its original error. The value is not kept anywhere else, so fix it in the source
-and harvest again. The RDF profiles already turn some values into nothing before validation (a number of
-records that is not an integer is not read), and those leave no warning.
+and harvest again. A number that is not an integer (the number of records, the typical ages, the byte size
+of a distribution) is kept by the RDF profiles as it is, so that it is reported like any other invalid
+value.
 
 ## Known limits
 
