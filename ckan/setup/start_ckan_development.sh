@@ -4,15 +4,6 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-# Install local extensions from src_extensions volume mount
-echo "Installing local extensions from /srv/app/src_extensions"
-for ext in /srv/app/src_extensions/ckanext-*; do
-    if [ -d "$ext" ]; then
-        echo "Installing $ext"
-        pip install -e "$ext"
-    fi
-done
-
 # Set debug to true
 echo "Enabling debug mode"
 ckan config-tool $CKAN_INI -s DEFAULT "debug = true"
