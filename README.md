@@ -91,10 +91,9 @@ ckan -c ckan.ini search-index rebuild
 ### 3.5. Metadata profiles
 
 One deployment can load the existing metadata model (`gdi_current`), HealthDCAT-AP R8
-(`healthdcat_r8`) or both, chosen at container start with `GDI_METADATA_PROFILES` and
-`GDI_METADATA_MAIN_PROFILE`. How to select, add and remove a profile, the harvest source key,
-the conformance check, the prune command and the rollback are in
-[docs/metadata-profiles.md](docs/metadata-profiles.md).
+(`healthdcat_r8`) or both, chosen at container start with `GDI_METADATA_PROFILES`. Select, add,
+remove and roll back a profile: [docs/metadata-profiles.md](docs/metadata-profiles.md). Already
+running the stack: [Updating an existing deployment](docs/metadata-profiles.md#updating-an-existing-deployment).
 
 ## 4. Accessing the running instance
 

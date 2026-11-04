@@ -3,7 +3,8 @@
 One CKAN deployment can load the existing metadata model (`gdi_current`), HealthDCAT-AP Release 8
 (`healthdcat_r8`) or both, chosen when the container starts. A FAIR Data Point harvest source can
 say which profile its FDP uses; if it says nothing, the deployment's main profile applies. The
-design and its decisions are in ADR 0001.
+design and its decisions are in ADR 0001. Already running the stack? Start at
+[Updating an existing deployment](#updating-an-existing-deployment).
 
 How it works: each profile is a *pack* in `ckanext-gdi-userportal`. When the
 container starts, a generator merges the schema fragments of the enabled packs into one scheming
@@ -221,6 +222,66 @@ The sync never deletes a field and a failure does not stop CKAN (see the `[solr-
 container log). After it reports changes, run `sh bin/ckan search-index rebuild` so that datasets indexed
 earlier get the new fields. Preview with `--dry-run`; details in
 `src/ckanext-gdi-userportal/ckanext/gdi_userportal/profile_packs/README.md`.
+
+## Updating an existing deployment
+
+For a developer or operator updating a running stack. It touches three extensions
+(`ckanext-gdi-userportal`, `ckanext-dcat`, `ckanext-fairdatapoint`), the start scripts and the Solr
+core, so do the steps in this order:
+
+1. **Update the submodules** to the revisions you are updating to (`git submodule update --init`),
+   then `sh bin/install_src` so the running container uses them.
+2. **Set the profiles** in `.env` (see *Select profiles*). Unset keeps the existing model
+   (`gdi_current`).
+3. **Recreate the container** (`sh bin/compose up -d --force-recreate ckan-dev`). The start script
+   regenerates the schema and syncs the Solr core. In the dev stack the start script lives in the
+   `/srv/app` volume, so an image rebuild does not apply it: see *Development stack*. Check the log
+   with `sh bin/compose logs ckan-dev | grep -E "metadata-profiles|solr-schema"`.
+4. **Reindex when the Solr sync reports changes**: `sh bin/ckan search-index rebuild`. Without it,
+   datasets indexed earlier lack the new fields.
+5. **Reharvest the sources.** There is no backfill: a stored dataset keeps the shape it was
+   harvested in until its source is harvested again. That matters when a schema was regenerated
+   (a field that became a list, a new field, the series link) and is the first thing to try when a
+   field looks empty or wrong after an update. Use `sh bin/ckan harvester job <source id>`, then let
+   the supervisor's consumers finish it. Calling `harvester run` again while a gather is still
+   running starts a second gather.
+6. **Give each source its profile** (`metadata_profile`, see *Select a profile per harvest source*).
+   A source whose profile is not enabled is hidden, not deleted.
+7. **Check the Discovery Service.** R8 widens several fields to lists (see *Known limits*) and the
+   Discovery Service still reads one value of each. With R8 enabled first it fails on such datasets
+   until it is updated. `gdi_current` is unaffected.
+8. **Run the tests on the host, not in the container.** The ckanext-dcat and ckanext-fairdatapoint
+   suites reset the dev database; run the pure-Python tests with
+   `uv run --no-project --with <deps> python -I -m pytest ...` (the profile pack suite is in *Add a
+   profile*). Tests that need a database (for example `test_import_stage_success_*`) do not run on
+   the host.
+
+## Dataset series in a harvest
+
+The RDF harvester (`dcat_rdf`) reads `dcat:DatasetSeries` and links each dataset to the series it
+names with `dcat:inSeries`. The rules:
+
+- **A series belongs to the harvest source that defines it.** A dataset links to a series of its
+  own source only, wherever the series sits in the file or in the pages of a paged source, and
+  whether it comes before or after the dataset. A dataset is never linked to a series of another
+  source or to a series created by hand.
+- **Two sources can define a series with the same URI.** Each gets its own series package, found
+  again at the next harvest through the harvest objects of that source, with the same id and name.
+  When a source stops listing its series, that series is deleted and the other source's series is
+  not touched.
+- **A reference that points at nothing is skipped silently.** An unknown URI, a URI of another
+  source, a blank node or a literal in `dcat:inSeries` imports the dataset without that link. A
+  dataset with no valid reference has no `in_series` key at all, not an empty list, and no warning is
+  written.
+- **The first harvest links too.** A new series gets its id while the source is gathered, so the
+  datasets of the same harvest can point at it before the series exists in CKAN.
+- **Datasets are still shared across sources.** A dataset URI defined by two sources is one package
+  that both update: only series are separated per source. The step that marks the objects of a
+  guid as not current is scoped to the source for every type.
+
+Not covered: the series of a paged source was tested with parser tests only, not live, and the
+scoping of the lookup by source is verified against a running stack, not by a host unit test (it
+needs the database). The JSON harvester (`_json.py`) still looks a dataset up by guid across sources.
 
 ## Verify a deployment
 
