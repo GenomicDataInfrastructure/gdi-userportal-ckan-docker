@@ -7,7 +7,7 @@
 FROM ckan/ckan-base:2.11.5
 
 USER root
-RUN chown -R ckan:ckan-sys ${APP_DIR}
+RUN chown -R ckan:ckan-sys ${APP_DIR} /usr/local
 USER ckan
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
