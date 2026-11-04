@@ -12,6 +12,11 @@ on:
 
 permissions: {}
 
+# Pushes to main publish an image, so a running publish is never cancelled: the next one waits.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/genomicdatainfrastructure/gdi-userportal-ckan-docker
@@ -43,6 +48,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log in to the Container registry
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
@@ -82,10 +90,22 @@ jobs:
           load: true
           tags: ${{ steps.tag.outputs.last_tag }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The database is saved daily by trivy_db_cache.yml. Without this step the scan below would skip
+      # the database update and have no database to scan with.
+      - name: Restore the Trivy database
+        id: trivy-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ github.workspace }}/.cache/trivy
+          key: cache-trivy-restore
+          restore-keys: cache-trivy-
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        continue-on-error: true  # Temporarily skip failure for base image vulnerabilities it will be reverted when the base image is updated
+        continue-on-error: true  # Advisory until the accepted base image CVEs are listed in .trivyignore, then remove this line
         with:
           image-ref: "${{ steps.tag.outputs.last_tag }}"
           format: "table"
@@ -93,9 +113,11 @@ jobs:
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL"
+          cache-dir: ${{ github.workspace }}/.cache/trivy
         env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
+          # Only skip the download when a database was restored
+          TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-cache.outputs.cache-matched-key != '' }}
+          TRIVY_SKIP_JAVA_DB_UPDATE: ${{ steps.trivy-cache.outputs.cache-matched-key != '' }}
 
       - name: Push Docker image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -104,3 +126,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          provenance: true
