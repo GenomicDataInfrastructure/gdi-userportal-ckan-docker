@@ -95,6 +95,20 @@ One deployment can load the existing metadata model (`gdi_current`), HealthDCAT-
 remove and roll back a profile: [docs/metadata-profiles.md](docs/metadata-profiles.md). Already
 running the stack: [Updating an existing deployment](docs/metadata-profiles.md#updating-an-existing-deployment).
 
+### 3.6. Database outage
+
+Stopping the database must not take CKAN down for good:
+
+```bash
+sh bin/compose stop db     # API calls that need the database answer 500
+sh bin/compose start db    # the same calls work again, without restarting CKAN
+```
+
+The dev server recovers on its own. The production image runs uwsgi with `--need-app`: a worker that
+cannot load CKAN (a restart while the database is down) makes uwsgi exit, the platform restarts the
+container, and `prerun.py` waits for the database (exiting non-zero when it gives up), until the
+database is back.
+
 ## 4. Accessing the running instance
 
 The ckan instance runs on port defined in CKAN_PORT_HOST (5500). Access it at http://localhost:5500.  
