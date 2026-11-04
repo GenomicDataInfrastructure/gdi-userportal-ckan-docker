@@ -35,26 +35,37 @@ jobs:
           git config --local user.email "lnds-Sysadmins@users.noreply.github.com"
           git config --local user.name "LNDS-Sysadmins"
           git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$REPOSITORY.git"
-          git pull
-          
+
           CHANGELOG_FILE="CHANGELOG.md"
-          PREVIOUS_TAG=$(git tag --sort=-creatordate | sed -n '2p')
-          
+          # The release before this one, in semantic version order
+          PREVIOUS_TAG=$(git tag --list 'v[0-9]*' --sort=-v:refname | grep -vx "$LATEST_TAG" | head -n 1)
+
           CHANGELOG_BRANCH="chore/$LATEST_TAG"
           git checkout -b "$CHANGELOG_BRANCH"
 
-          echo "📢 Generating changelog for $LATEST_TAG (since $PREVIOUS_TAG)..."
+          echo "Generating changelog for $LATEST_TAG (since ${PREVIOUS_TAG:-the first commit})..."
 
-          COMMITS=$(git log "$PREVIOUS_TAG".."$LATEST_TAG" --no-merges --pretty=format:"%s by @%an in %h")
+          if [[ -n "$PREVIOUS_TAG" ]]; then
+            RANGE="$PREVIOUS_TAG..$LATEST_TAG"
+          else
+            RANGE="$LATEST_TAG"
+          fi
+          COMMITS=$(git log "$RANGE" --no-merges --pretty=format:"%s by @%an in %h")
 
           ADDED=""; CHANGED=""; FIXED=""; REMOVED=""; SECURITY=""
           while IFS= read -r line; do
-            case "$line" in
-              *feat*|*implement*) ADDED+="- $line\n" ;;
-              *fix*|*bug*|*resolve*|*patch*) FIXED+="- $line\n" ;;
-              *update*|*modify*|*change*|*refactor*|*chore*) CHANGED+="- $line\n" ;;
-              *decommission*|*delete*|*remove*) REMOVED+="- $line\n" ;;
-              *security*|*vuln*|*"patch security"*) SECURITY+="- $line\n" ;;
+            [[ -z "$line" ]] && continue
+            # Sort by the conventional commit type at the start of the subject, not by a word anywhere in it
+            if [[ "$line" =~ ^([a-zA-Z]+)(\([^\)]*\))?(!)?:\  ]]; then
+              type="${BASH_REMATCH[1],,}"
+            else
+              type=""
+            fi
+            case "$type" in
+              feat) ADDED+="- $line\n" ;;
+              fix) FIXED+="- $line\n" ;;
+              security) SECURITY+="- $line\n" ;;
+              revert) REMOVED+="- $line\n" ;;
               *) CHANGED+="- $line\n" ;;
             esac
           done <<< "$COMMITS"
@@ -72,13 +83,21 @@ jobs:
             echo -e "# Changelog\n\nAll notable changes to this project will be documented here.\n" > "$CHANGELOG_FILE"
           fi
 
-          sed -i '14r temp_changelog.md' "$CHANGELOG_FILE"
+          # Put the new entry above the newest one (or at the end when there is none yet)
+          if grep -q '^## \[' "$CHANGELOG_FILE"; then
+            awk 'BEGIN { done = 0 }
+                 !done && /^## \[/ { while ((getline line < "temp_changelog.md") > 0) print line; done = 1 }
+                 { print }' "$CHANGELOG_FILE" > changelog.new
+          else
+            cat "$CHANGELOG_FILE" temp_changelog.md > changelog.new
+          fi
+          mv changelog.new "$CHANGELOG_FILE"
           rm temp_changelog.md
 
           git add "$CHANGELOG_FILE"
-          git commit -m "doc: update CHANGELOG.md for $LATEST_TAG"
+          git commit -m "docs: update CHANGELOG.md for $LATEST_TAG"
           git push origin "$CHANGELOG_BRANCH"
-          
+
           gh pr create \
             --title "chore: update changelog for $LATEST_TAG" \
             --body "This PR updates the changelog for release $LATEST_TAG." \
