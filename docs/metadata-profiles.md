@@ -237,6 +237,18 @@ Then run a Discovery Service search against it. Harvest with `sh bin/ckan harves
 not `harvester run-test`, which races the supervisor's consumers. Run tests on the host, never in the
 `ckan-dev` container (step 8 of *Updating an existing deployment*).
 
+## Invalid values in a harvested dataset
+
+A remote catalogue can hold a value the schema rejects (a status that is not one of the choices, a number
+that is not an integer). The FAIR Data Point and the RDF harvester import the dataset anyway, without that
+value, and save a warning on the harvest object: `Warning: imported without the invalid value: <field> =
+'<value>' (<what CKAN said>)`. Warnings are listed with the errors of the harvest job in the harvest source
+page. This applies to the dataset and to each distribution (and to subfields and resources at any depth).
+Only the value is dropped: a dataset that still does not validate (no title, an unknown organization) is
+rejected with its original error. The value is not kept anywhere else, so fix it in the source
+and harvest again. The RDF profiles already turn some values into nothing before validation (a number of
+records that is not an integer is not read), and those leave no warning.
+
 ## Known limits
 
 - The landing page and the type of a dataset, and the access URL, the download URL and the rights of a
