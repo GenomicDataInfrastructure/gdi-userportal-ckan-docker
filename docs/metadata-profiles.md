@@ -98,8 +98,9 @@ error naming the source and the profile. Nothing is harvested and there is no si
 the main profile, because that would change the shape of the data unnoticed. Edit the source to
 fix it. Each job logs the effective profile at INFO.
 
-Only the FAIR Data Point harvester reads the key. The `dcat_rdf` and S3 harvesters use the
-deployment's main profile (`ckanext.dcat.rdf.profiles`).
+The FAIR Data Point, `dcat_rdf` and S3 harvesters all read the key (and the older `profile` key), and a
+source config that names an enabled profile, or both keys, is checked when the source is saved. The
+`dcat_json` harvester does not parse RDF and ignores them.
 
 ## Conformance
 
@@ -209,8 +210,6 @@ dataset that no harvest source created is never hidden either: nothing says whic
 - A series or dataset created by hand, or by an API client, has no source and stays visible, whatever it holds.
 - The datasets of a hidden source show as "0 datasets" on its harvest page, because that count is a search.
 - `package_list` still names a hidden dataset: it reads the database, not the search.
-- The RDF harvester (`dcat_rdf`) does not yet parse with the chain of the profile a source names; it uses the
-  main profile's. The key only decides what is hidden there.
 
 ## Solr schema
 
@@ -275,13 +274,21 @@ names with `dcat:inSeries`. The rules:
   written.
 - **The first harvest links too.** A new series gets its id while the source is gathered, so the
   datasets of the same harvest can point at it before the series exists in CKAN.
-- **Datasets are still shared across sources.** A dataset URI defined by two sources is one package
-  that both update: only series are separated per source. The step that marks the objects of a
-  guid as not current is scoped to the source for every type.
 
-Not covered: the series of a paged source was tested with parser tests only, not live, and the
-scoping of the lookup by source is verified against a running stack, not by a host unit test (it
-needs the database). The JSON harvester (`_json.py`) still looks a dataset up by guid across sources.
+## Harvest sources keep their datasets apart
+
+A dataset is identified by its URI *within the harvest source* that imported it, the same way a series is.
+Two sources that define a dataset with the same URI get two packages, and each source updates, replaces and
+deletes only its own. The FAIR Data Point, `dcat_rdf`, S3 and `dcat_json` harvesters all work this way.
+
+- A package is found at the next harvest through the harvest objects of its source, not through the `guid`
+  extra. A dataset (or series) created by hand with a matching `guid` extra is therefore not taken over by a
+  harvest: the harvest creates its own package and gives it a free name.
+- **Packages that two sources already shared stay shared.** They were created when a second source with
+  the same dataset URI updated the first source's package, so both sources' harvest objects point at it.
+  If one of the sources drops the dataset the shared package is deleted. To separate them, clear one of
+  the two sources (`ckan harvester source clear <id>`) and harvest it again.
+- The scoping by source needs the database, so it has no host unit test.
 
 ## Verify a deployment
 
