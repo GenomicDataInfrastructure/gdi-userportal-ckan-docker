@@ -110,24 +110,56 @@ FHIR). A dataset conforms to an enabled profile when every property that profile
 at the dataset's access layer has a value. The layer (`PUBLIC`, `RESTRICTED`, `NON_PUBLIC`) comes
 from the last segment of `access_rights`. Nothing is ever blocked on the outcome.
 
-API action (anonymous access, subject to the same read rules as `package_show`):
+**A record is checked against the profile it comes from**, not against every enabled one: the
+`metadata_profile` of the harvest source that created it (basis `source`), the main profile when that
+source names none (`main`), and every enabled profile when no source created it, as for a dataset made by
+hand or through the API (`enabled`). A dataset of an `fdp-test` source on `gdi_current` is therefore never
+judged against R8, and the R8 example only against R8. A source whose profile is not enabled leaves nothing
+to check: its datasets are hidden anyway.
+
+Three kinds of record are checked:
+
+| Record | Mandatory in R8 | Depends on the access layer |
+| --- | --- | --- |
+| Dataset | the properties of R8's cardinality rules (10 in `PUBLIC` and `RESTRICTED`, 14 in `NON_PUBLIC`) | yes |
+| Distribution: a resource, a sample and an analytics distribution included | applicable legislation | no |
+| Dataset series | applicable legislation | no |
+
+A **sample** (`adms:sample`) and an **analytics** distribution (`healthdcatap:analytics`) are distributions:
+the RDF profile stores them as resources of the dataset, R8's shapes apply the distribution shape to them,
+and they are checked like any other. A resource is labelled `sample` or `analytics` when its `uri` is in the
+dataset's `sample` or `analytics` list. They also count as the dataset's distributions for the dataset's own
+"dataset distribution" property. The result of a dataset does not include the results of its distributions or
+its series: those are shown separately.
+
+API action (anonymous access, subject to the same read rules as `package_show`; it takes a dataset or a
+dataset series):
 
 ```
-GET /api/3/action/gdi_metadata_profile_conformance?id=<dataset id or name>
+GET /api/3/action/gdi_metadata_profile_conformance?id=<dataset or series id or name>
 ```
 
 ```json
 {
-  "id": "…", "name": "…", "main_profile": "gdi_current",
+  "id": "…", "name": "…", "type": "dataset", "main_profile": "gdi_current",
+  "source_profile": "healthdcat_r8", "applicable_profiles": ["healthdcat_r8"], "basis": "source",
   "access_layer": "NON_PUBLIC",
   "profiles": {
     "healthdcat_r8": { "conformant": false, "mandatory": 14,
                        "missing": [{ "property": "keyword", "fields": ["tags_translated", "tags"] }] },
     "gdi_current":   { "conformant": true, "mandatory": 0, "missing": [] }
   },
-  "conformant_profiles": ["gdi_current"]
+  "conformant_profiles": ["gdi_current"],
+  "distributions": [
+    { "id": "…", "name": "Synthetic sample", "kind": "sample",
+      "profiles": { "healthdcat_r8": { "conformant": true, "mandatory": 1, "missing": [] } },
+      "conformant_profiles": ["healthdcat_r8"] }
+  ]
 }
 ```
+
+`profiles` answers for every enabled profile, so a caller can read any of them; `applicable_profiles` is the
+list that counts for this record. A series has `access_layer: null` and no `distributions`.
 
 - Missing or malformed values on old datasets never raise: the profile is "not conformant". With
   no usable `access_rights` there is no layer, and a profile with mandatory properties answers
@@ -135,7 +167,10 @@ GET /api/3/action/gdi_metadata_profile_conformance?id=<dataset id or name>
 - `gdi_current` has no mandatory properties, so every dataset satisfies it.
 - Only the presence of a value is checked: not the maximum cardinality, the vocabulary, the shape of
   a nested node, or R8's rule that structured data needs variables.
-- Dataset series are rejected (the rules are for datasets).
+- Records of other types (such as a showcase) are rejected.
+- The rules for distributions and series come from R8's SHACL shapes, which R8's cardinality file does not
+  cover. They are kept in `conformance/healthdcat_r8_fields.yaml` under `classes` and carried into the
+  generated file by the same builder; see *Add a profile*.
 - A harvested dataset that does not conform to its source's profile also gets a WARNING in the
   harvest log (FAIR Data Point harvester); it never fails the import. The `dcat_rdf` and S3 harvesters
   log nothing about conformance: use the indicator or the report below.
@@ -144,15 +179,21 @@ GET /api/3/action/gdi_metadata_profile_conformance?id=<dataset id or name>
 
 Nothing is stored for any of these; each is computed from the dataset when you ask.
 
-- **Dataset page**: under the description, one badge per enabled profile. Green when the dataset
-  conforms, amber with the missing properties when it does not (or the reason, when there is no access
-  layer). A dataset series shows nothing.
-- **Dataset lists** (search, organization, group and harvest-source pages): an amber
-  "Not conformant: `<profile>` (n missing)" badge, only on a dataset that misses a mandatory property of an
-  enabled profile. The tooltip names the missing properties. A dataset that conforms to every enabled
-  profile gets no badge. It is computed from the result dicts of the page, so there is no extra query and
-  no index field.
-- **Report of what does not conform** (sysadmins; private datasets are included, datasets of a hidden
+- **Dataset and series page**: under the description, one badge per profile the record is checked
+  against, with a line saying why (its harvest source, the main profile, or every enabled profile). Green
+  when it conforms, amber with the missing properties when it does not (or the reason, when a dataset has
+  no access layer).
+- **Distribution list of a dataset**: a grey "Sample" or "Analytics" label on those distributions, and an
+  amber "Not conformant: `<profile>` (n missing)" badge on a distribution that misses a mandatory property.
+  A conforming distribution gets no badge.
+- **Distribution page**: the kind ("Distribution", "Sample distribution" or "Analytics distribution") and
+  one badge per profile of the dataset it belongs to.
+- **Dataset and series lists** (search, organization, group and harvest-source pages): an amber
+  "Not conformant: `<profile>` (n missing)" badge, only on a record that misses a mandatory property of a
+  profile it is checked against. The tooltip names the missing properties. A record that conforms gets no
+  badge. It is computed from the result dicts of the page, so there is no extra search query and no index
+  field; the sources of the page are looked up once per request.
+- **Report of what does not conform** (sysadmins; private records are included, datasets of a hidden
   profile are not, because the search does not return them):
 
   ```
@@ -160,8 +201,16 @@ Nothing is stored for any of these; each is computed from the dataset when you a
   sh bin/ckan gdi-userportal profiles conformance [--profile <pack>] [--json]
   ```
 
-  For each profile it lists the datasets that do not conform, each with its access layer and the
-  missing properties. The command is read-only.
+  For each profile it counts what was checked against it and lists what does not conform, in three
+  sections: `datasets` (with access layer and missing properties), `series` and `distributions` (each with
+  its dataset, its kind and the missing properties). The command is read-only.
+
+  ```
+  Checked 30 dataset(s), 2 series and 10 distribution(s)
+  gdi_current: all conform (29 dataset(s), 2 series, 6 distribution(s))
+  healthdcat_r8: 1 of 2 dataset(s) do not conform
+    invalid-value-probe-two: access rights is missing
+  ```
 
 The mandatory properties of `healthdcat_r8` are **generated** from R8's own
 `healthdcat-cardinality-rules.json`, not copied by hand: see *Add a profile*.
@@ -181,7 +230,9 @@ Details and the merge rules are in `src/ckanext-gdi-userportal/ckanext/gdi_userp
    point. Keep field names profile-neutral: only the mapping may depend on the version.
 4. **Conformance** (optional): run `conformance_build.py` on the profile's cardinality rules, after
    mapping each mandatory property to its CKAN fields in `conformance/<name>_fields.yaml`. The build
-   fails if a mandatory property has no fields or a mapped property is not mandatory.
+   fails if a mandatory property has no fields or a mapped property is not mandatory. The same file can carry
+   `classes: {distribution, series}` for the properties a profile makes mandatory on those classes (R8 takes
+   them from its SHACL shapes, not from the cardinality rules); they are copied into the generated file.
 5. **Tests** (host, no CKAN needed):
    `uv run --no-project --with pyyaml --with sqlalchemy --with pytest python -I -m pytest ckanext/gdi_userportal/tests/profile_packs`
 6. Enable it with `GDI_METADATA_PROFILES`, recreate the container and check the schema (below).
