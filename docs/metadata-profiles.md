@@ -410,7 +410,13 @@ value.
   the order of the model. With both packs enabled the pack listed first decides.
 - `CKANEXT__GDI_USERPORTAL__SHOW_EMPTY_PROPERTIES=true` makes the dataset and distribution pages list
   every property of the schema, with a dash for the empty ones. It is for looking at what the schema,
-  the form and a harvest can hold, and is off by default.
+  the form and a harvest can hold, and is off by default. With more than one profile enabled the
+  schema holds the fields of all of them, so a dataset only gets a dash for the fields of the profile
+  of its harvest source (the main profile when the source names none): an R8 dataset shows no dash for
+  `trusted_data_holder`, a `gdi_current` one none for `source`. A dataset without a known harvest
+  source gets every field, and a field that has a value is always shown. A distribution, sample or
+  analytics page follows the profile of its dataset. A dataset series is not restricted: its schema is
+  the series schema of the first pack that has one, not built from the packs.
 - The export selector `?metadata_profile=<pack>` of ADR 0001 is not implemented: exports use the main
   profile's chain, or a raw `?profiles=`.
 - Concept and ConceptScheme and the licence type are not covered (see the R8 gap analysis).
