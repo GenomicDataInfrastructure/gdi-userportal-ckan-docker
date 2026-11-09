@@ -137,7 +137,31 @@ GET /api/3/action/gdi_metadata_profile_conformance?id=<dataset id or name>
   a nested node, or R8's rule that structured data needs variables.
 - Dataset series are rejected (the rules are for datasets).
 - A harvested dataset that does not conform to its source's profile also gets a WARNING in the
-  harvest log (FAIR Data Point harvester); it never fails the import.
+  harvest log (FAIR Data Point harvester); it never fails the import. The `dcat_rdf` and S3 harvesters
+  log nothing about conformance: use the indicator or the report below.
+
+### Where conformance shows
+
+Nothing is stored for any of these; each is computed from the dataset when you ask.
+
+- **Dataset page**: under the description, one badge per enabled profile. Green when the dataset
+  conforms, amber with the missing properties when it does not (or the reason, when there is no access
+  layer). A dataset series shows nothing.
+- **Dataset lists** (search, organization, group and harvest-source pages): an amber
+  "Not conformant: `<profile>` (n missing)" badge, only on a dataset that misses a mandatory property of an
+  enabled profile. The tooltip names the missing properties. A dataset that conforms to every enabled
+  profile gets no badge. It is computed from the result dicts of the page, so there is no extra query and
+  no index field.
+- **Report of what does not conform** (sysadmins; private datasets are included, datasets of a hidden
+  profile are not, because the search does not return them):
+
+  ```
+  GET /api/3/action/gdi_metadata_profile_conformance_report[?profile=<pack>]
+  sh bin/ckan gdi-userportal profiles conformance [--profile <pack>] [--json]
+  ```
+
+  For each profile it lists the datasets that do not conform, each with its access layer and the
+  missing properties. The command is read-only.
 
 The mandatory properties of `healthdcat_r8` are **generated** from R8's own
 `healthdcat-cardinality-rules.json`, not copied by hand: see *Add a profile*.
