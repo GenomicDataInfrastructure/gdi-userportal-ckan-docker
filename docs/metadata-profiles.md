@@ -293,8 +293,10 @@ The Solr core is created once from the image and lives in a volume, so rebuildin
 update an existing core. At every start the start scripts run `solr_schema sync`: it adds the dataset
 fields of the enabled profiles to the core as explicit fields (multi valued when the field is a list)
 and applies changes of `solr/schema.xml` through the Solr Schema API.
-The sync never deletes a field and a failure does not stop CKAN (see the `[solr-schema]` lines of the
-container log). After it reports changes, run `sh bin/ckan search-index rebuild` so that datasets indexed
+It reads every dataset schema CKAN is configured with (`scheming.dataset_schemas`: the generated dataset
+schema and the series schema), and removes the explicit fields that none of them and `solr/schema.xml` describe any
+more (for example those of a field that a profile no longer has). `--keep-leftovers` leaves them in place. A
+failure does not stop CKAN (see the `[solr-schema]` lines of the container log). After it reports changes, run `sh bin/ckan search-index rebuild` so that datasets indexed
 earlier get the new fields. Preview with `--dry-run`; details in
 `src/ckanext-gdi-userportal/ckanext/gdi_userportal/profile_packs/README.md`.
 

@@ -51,7 +51,7 @@ ckan config-tool $CKAN_INI -s app:main "${METADATA_PROFILE_OPTIONS[@]}"
 # Same Solr sync as start_ckan.sh; a failure never stops CKAN.
 echo "[solr-schema] Syncing the Solr schema"
 PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.solr_schema sync \
-    --dataset-schema "${APP_DIR}/generated/dataset.yaml" \
+    --ckan-ini "$CKAN_INI" \
     || echo "[solr-schema] could not sync the Solr schema, see above"
 
 # Run the prerun script to init CKAN and create the default admin user.
