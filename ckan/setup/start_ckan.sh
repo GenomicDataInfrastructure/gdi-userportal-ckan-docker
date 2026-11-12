@@ -44,10 +44,11 @@ ckan config-tool $CKAN_INI -s app:main "${METADATA_PROFILE_OPTIONS[@]}"
 
 # Sync the Solr core with the enabled profiles (see profile_packs/README.md, "Solr schema"): the core
 # is created once from the Solr image, so a new profile field would otherwise not reach it. A failure
-# is logged and never stops CKAN; search keeps working with the schema the core has.
+# is logged and never stops CKAN; search keeps working with the schema the core has. It reads every
+# schema of scheming.dataset_schemas (CKAN_INI) and removes the fields no schema describes any more.
 echo "[solr-schema] Syncing the Solr schema"
 PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.solr_schema sync \
-    --dataset-schema "${APP_DIR}/generated/dataset.yaml" \
+    --ckan-ini "$CKAN_INI" \
     || echo "[solr-schema] could not sync the Solr schema, see above"
 
 # Run the prerun script to init CKAN and create the default admin user.
