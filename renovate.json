@@ -1,9 +1,30 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":preserveSemverRanges",
+    ":dependencyDashboard",
+    ":rebaseStalePrs",
+    ":enableVulnerabilityAlertsWithLabel('security')",
+    "group:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "customManagers": [
+    {
+      "description": "Extensions installed from a git tag in the Dockerfiles: git+https://github.com/<owner>/<repo>.git@<tag>",
+      "customType": "regex",
+      "managerFilePatterns": ["/^ckan/Dockerfile(\\.dev)?$/"],
+      "matchStrings": [
+        "git\\+https://github\\.com/(?<depName>[\\w.-]+/[\\w.-]+?)\\.git@(?<currentValue>[^#'\\s]+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "loose"
+    }
+  ],
   "packageRules": [
     {
-      "depTypeList": ["devDependencies", "require-dev"],
-      "updateTypes": ["patch", "minor", "major"],
+      "matchDepTypes": ["devDependencies", "require-dev"],
+      "matchUpdateTypes": ["patch", "minor", "major"],
       "groupName": "devDependencies"
     },
     {
@@ -17,13 +38,5 @@
       "semanticCommitType": "fix",
       "automergeType": "pr"
     }
-  ],
-  "extends": [
-    "config:base",
-    ":preserveSemverRanges",
-    ":dependencyDashboard",
-    ":rebaseStalePrs",
-    ":enableVulnerabilityAlertsWithLabel('security')",
-    "group:recommended"
   ]
 }

@@ -52,7 +52,11 @@ PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_pac
 
 # Run the prerun script to init CKAN and create the default admin user.
 # It runs as root, so point it at the ckan user's site-packages, where the image installs the extensions.
-PYTHONUSERBASE="${APP_DIR}/.local" python3 prerun.py
+if ! PYTHONUSERBASE="${APP_DIR}/.local" python3 prerun.py
+then
+    echo "[prerun] failed...not starting CKAN."
+    exit 1
+fi
 
 # Run any startup scripts provided by images extending this one
 if [[ -d "/docker-entrypoint.d" ]]
@@ -66,24 +70,22 @@ then
     done
 fi
 
+# --need-app: a worker that cannot load CKAN (the database is down) makes uwsgi exit, so the container
+# restarts and prerun.py waits for the database, instead of uwsgi answering 500 until someone
+# restarts it (see README 3.6).
 UWSGI_OPTS="--socket /tmp/uwsgi.sock \
             --wsgi-file /srv/app/wsgi.py \
             --module wsgi:application \
             --http [::]:5000 \
             --master --enable-threads \
-            --lazy-apps \
+            --lazy-apps --need-app \
             -p 2 -L -b 32768 --vacuum \
             --harakiri $UWSGI_HARAKIRI"
 
-if [ $? -eq 0 ]
-then
-    supervisord --configuration /etc/supervisord.d/ckan.conf
-    # Start uwsgi as ckan while keeping the container runtime root for cron.
-    if command -v runuser >/dev/null 2>&1; then
-        runuser -u ckan -- sh -lc "uwsgi $UWSGI_OPTS"
-    else
-        su -s /bin/sh ckan -c "uwsgi $UWSGI_OPTS"
-    fi
+supervisord --configuration /etc/supervisord.d/ckan.conf
+# Start uwsgi as ckan while keeping the container runtime root for cron.
+if command -v runuser >/dev/null 2>&1; then
+    runuser -u ckan -- sh -lc "uwsgi $UWSGI_OPTS"
 else
-  echo "[prerun] failed...not starting CKAN."
+    su -s /bin/sh ckan -c "uwsgi $UWSGI_OPTS"
 fi

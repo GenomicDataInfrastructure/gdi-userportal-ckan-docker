@@ -8,11 +8,21 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version increment (major, minor, patch)'
+        description: 'Version increment'
         required: true
         default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
 
 permissions: {}
+
+# One release at a time, and a running release is never cancelled.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 env:
   REGISTRY: ghcr.io
@@ -35,11 +45,13 @@ jobs:
           fail-on: "issues"
           run: "cache-dependencies,cache-scan-results,labels,analyzer,evaluator,advisor,reporter,upload-results"
 
+  # Works out the next version only. The tag is created by the release, after the image is built and
+  # scanned, so a failed build leaves no tag behind.
   versioning:
     runs-on: ubuntu-latest
     needs: ort
     permissions:
-      contents: write
+      contents: read
     outputs:
       new_tag: ${{ steps.tagging.outputs.new_tag }}
     steps:
@@ -49,85 +61,50 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set Git User Identity
-        run: |
-          git config --local user.email "lnds-Sysadmins@users.noreply.github.com"
-          git config --local user.name "LNDS-Sysadmins"
-
-      - name: Fetch Latest Tag and Increment Version
+      - name: Work out the next version
         id: tagging
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION_INCREMENT: ${{ github.event.inputs.version }}
-          REPOSITORY: ${{ github.repository }}
+          VERSION_INCREMENT: ${{ inputs.version }}
         run: |
-          git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$REPOSITORY.git"
-          LATEST_TAG=$(git tag --sort=-creatordate | head -n 1)
+          # Semantic version order, not creation order
+          LATEST_TAG=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
+          LATEST_TAG=${LATEST_TAG:-v0.0.0}
           echo "Latest tag: $LATEST_TAG"
-          
-          # Extract Major, Minor, Patch
-          IFS='.' read -r MAJOR MINOR PATCH <<<"${LATEST_TAG//v/}"
-          INCREMENT="$VERSION_INCREMENT"
-          if [[ "$INCREMENT" != "major" && "$INCREMENT" != "minor" && "$INCREMENT" != "patch" ]]; then
-            echo "Invalid version increment: $INCREMENT"
-            exit 1
-          fi
-          echo "Updating : $INCREMENT version"
-          
-          case "$INCREMENT" in
+
+          IFS='.' read -r MAJOR MINOR PATCH <<<"${LATEST_TAG#v}"
+
+          case "$VERSION_INCREMENT" in
             major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
             minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
-            patch|*) PATCH=$((PATCH + 1)) ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+            *) echo "Invalid version increment: $VERSION_INCREMENT"; exit 1 ;;
           esac
 
           NEW_TAG="v$MAJOR.$MINOR.$PATCH"
-          echo "Pushing this tag: $NEW_TAG"
-          
-          git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
-          git push origin "$NEW_TAG"
+          if git rev-parse -q --verify "refs/tags/$NEW_TAG" > /dev/null; then
+            echo "Tag $NEW_TAG already exists"
+            exit 1
+          fi
 
-          echo "New tag pushed: $NEW_TAG"
-          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
-
-  publish-release:
-    runs-on: ubuntu-latest
-    needs: versioning
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Install GitHub CLI
-        run: sudo apt-get install -y gh
-
-      - name: Generate and Publish GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEW_TAG: ${{ needs.versioning.outputs.new_tag }}
-        run: |
-          PREVIOUS_TAG=$(git tag --sort=-creatordate | sed -n '2p')
-
-          echo "Creating GitHub release for $NEW_TAG from previous release $PREVIOUS_TAG"
-          
-          gh release create "$NEW_TAG" \
-            --title "Release $NEW_TAG" \
-            --generate-notes \
-            --notes-start-tag "$PREVIOUS_TAG"
+          echo "New version: $NEW_TAG"
+          echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
 
   build-and-push-image:
     runs-on: ubuntu-latest
-    needs: [versioning, publish-release]
+    needs: versioning
     permissions:
-      contents: write # gh release upload (SBOM)
+      contents: read
       packages: write
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log in to the Container registry
         uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
@@ -165,10 +142,20 @@ jobs:
           load: true
           tags: ${{ steps.tag.outputs.last_tag }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Restore the Trivy database
+        id: trivy-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ github.workspace }}/.cache/trivy
+          key: cache-trivy-restore
+          restore-keys: cache-trivy-
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        continue-on-error: true  # Temporarily skip failure for base image vulnerabilities
+        continue-on-error: true  # Advisory until the accepted base image CVEs are listed in .trivyignore, then remove this line
         with:
           image-ref: "${{ steps.tag.outputs.last_tag }}"
           format: "table"
@@ -176,6 +163,10 @@ jobs:
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL"
+          cache-dir: ${{ github.workspace }}/.cache/trivy
+        env:
+          TRIVY_SKIP_DB_UPDATE: ${{ steps.trivy-cache.outputs.cache-matched-key != '' }}
+          TRIVY_SKIP_JAVA_DB_UPDATE: ${{ steps.trivy-cache.outputs.cache-matched-key != '' }}
 
       - name: Build and push Docker image
         id: push
@@ -185,22 +176,56 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          provenance: true
+
+  # Creates the tag, the release notes and the SBOM once the image is published.
+  publish-release:
+    runs-on: ubuntu-latest
+    needs: [versioning, build-and-push-image]
+    permissions:
+      contents: write # create the tag and the release, upload the SBOM
+      packages: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the tags, to find the previous release
+          persist-credentials: false
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate image SBOM
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}
+          image-ref: ${{ env.IMAGE_NAME }}@${{ needs.build-and-push-image.outputs.digest }}
           format: cyclonedx
           output: sbom.cdx.json
 
-      - name: Attach SBOM to the release
-        run: gh release upload "$NEW_TAG" sbom.cdx.json --clobber --repo "$GITHUB_REPOSITORY"
+      - name: Create the release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEW_TAG: ${{ needs.versioning.outputs.new_tag }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          PREVIOUS_TAG=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
+          echo "Creating release $NEW_TAG (previous release: ${PREVIOUS_TAG:-none})"
+
+          ARGS=(--title "Release $NEW_TAG" --generate-notes --target "$TARGET_SHA")
+          if [[ -n "$PREVIOUS_TAG" ]]; then
+            ARGS+=(--notes-start-tag "$PREVIOUS_TAG")
+          fi
+
+          # gh creates the tag at the commit that was built
+          gh release create "$NEW_TAG" sbom.cdx.json "${ARGS[@]}"
 
   call-generate-changelog:
-    needs: [versioning, build-and-push-image]
+    needs: [versioning, publish-release]
     permissions:
       contents: write
       pull-requests: write

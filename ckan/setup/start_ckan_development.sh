@@ -4,15 +4,6 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-# Install local extensions from src_extensions volume mount
-echo "Installing local extensions from /srv/app/src_extensions"
-for ext in /srv/app/src_extensions/ckanext-*; do
-    if [ -d "$ext" ]; then
-        echo "Installing $ext"
-        pip install -e "$ext"
-    fi
-done
-
 # Set debug to true
 echo "Enabling debug mode"
 ckan config-tool $CKAN_INI -s DEFAULT "debug = true"
@@ -56,6 +47,12 @@ then
 fi
 mapfile -t METADATA_PROFILE_OPTIONS <<< "$METADATA_PROFILE_CONFIG"
 ckan config-tool $CKAN_INI -s app:main "${METADATA_PROFILE_OPTIONS[@]}"
+
+# Same Solr sync as start_ckan.sh; a failure never stops CKAN.
+echo "[solr-schema] Syncing the Solr schema"
+PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.solr_schema sync \
+    --dataset-schema "${APP_DIR}/generated/dataset.yaml" \
+    || echo "[solr-schema] could not sync the Solr schema, see above"
 
 # Run the prerun script to init CKAN and create the default admin user.
 # It runs as root, so point it at the ckan user's site-packages, where the image installs the extensions.
