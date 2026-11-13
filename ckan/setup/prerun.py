@@ -62,7 +62,7 @@ def check_db_connection(conn_str, retry=None):
     if retry is None:
         retry = RETRY
     elif retry == 0:
-        print("[prerun] Giving up after 5 tries...")
+        print("[prerun] Giving up after {} tries...".format(RETRY))
         sys.exit(1)
 
     try:
@@ -82,7 +82,7 @@ def check_solr_connection(retry=None):
     if retry is None:
         retry = RETRY
     elif retry == 0:
-        print("[prerun] Giving up after 5 tries...")
+        print("[prerun] Giving up after {} tries...".format(RETRY))
         sys.exit(1)
 
     url = os.environ.get("CKAN_SOLR_URL", "")
@@ -96,13 +96,12 @@ def check_solr_connection(retry=None):
         time.sleep(10)
         check_solr_connection(retry=retry - 1)
     else:
-        import re
         conn_info = connection.read()
         schema_name = json.loads(conn_info)
         if 'ckan' in schema_name['name']:
-            print('[prerun] Succesfully connected to solr and CKAN schema loaded')
+            print('[prerun] Successfully connected to solr and CKAN schema loaded')
         else:
-            print('[prerun] Succesfully connected to solr, but CKAN schema not found')
+            print('[prerun] Successfully connected to solr, but CKAN schema not found')
 
 
 def init_db():
@@ -159,19 +158,14 @@ def run_term_translation_migrations(retry=None):
         # If the schema isn't initialized yet, try to init/upgrade DB then retry.
         if ("term_translation" in output) and (("does not exist" in output) or ("UndefinedTable" in output)):
             print("[prerun] term_translation table missing; initializing/upgrading CKAN DB and retrying migrations")
-            try:
-                subprocess.check_output(["ckan", "-c", ckan_ini, "db", "init"], stderr=subprocess.STDOUT)
-            except Exception:
-                # db init is idempotent; ignore failures here and retry below
-                pass
-            try:
-                subprocess.check_output(["ckan", "-c", ckan_ini, "db", "upgrade"], stderr=subprocess.STDOUT)
-            except Exception:
-                pass
-            try:
-                subprocess.check_output(["ckan", "-c", ckan_ini, "db", "upgrade", "-p", "harvest"], stderr=subprocess.STDOUT)
-            except Exception:
-                pass
+            # Failures are not fatal here: the migration is retried below, and its error is
+            # printed if it still fails. db init is idempotent.
+            for db_args in (["init"], ["upgrade"], ["upgrade", "-p", "harvest"]):
+                try:
+                    subprocess.check_output(["ckan", "-c", ckan_ini, "db"] + db_args, stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError as db_error:
+                    print("[prerun] 'ckan db {}' failed, continuing:".format(" ".join(db_args)))
+                    print(db_error.output.decode("utf-8", errors="replace") if db_error.output else str(db_error))
         else:
             print("[prerun] Term translation migrations failed, will retry")
             print(output)
@@ -226,14 +220,20 @@ def create_sysadmin():
             "email=" + email,
         ]
 
-        subprocess.call(command)
-        print("[prerun] Created user {0}".format(name))
+        returncode = subprocess.call(command)
+        if returncode == 0:
+            print("[prerun] Created user {0}".format(name))
+        else:
+            print("[prerun] Creating user {0} failed (exit code {1})".format(name, returncode))
 
         # Make it sysadmin
         command = ["ckan", "-c", ckan_ini, "sysadmin", "add", name]
 
-        subprocess.call(command)
-        print("[prerun] Made user {0} a sysadmin".format(name))
+        returncode = subprocess.call(command)
+        if returncode == 0:
+            print("[prerun] Made user {0} a sysadmin".format(name))
+        else:
+            print("[prerun] Making user {0} a sysadmin failed (exit code {1})".format(name, returncode))
 
         # cleanup permissions
         # We're running as root before pivoting to uwsgi and dropping privs
