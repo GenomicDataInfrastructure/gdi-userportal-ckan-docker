@@ -10,7 +10,7 @@ SPDX-License-Identifier: CC-BY-4.0
 ![example workflow](https://github.com/GenomicDataInfrastructure/gdi-userportal-ckan-docker/actions/workflows/test.yml/badge.svg)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=GenomicDataInfrastructure_gdi-userportal-ckan-docker&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=GenomicDataInfrastructure_gdi-userportal-ckan-docker)
 [![GitHub contributors](https://img.shields.io/github/contributors/GenomicDataInfrastructure/gdi-userportal-ckan-docker)](https://github.com/GenomicDataInfrastructure/gdi-userportal-ckan-docker/graphs/contributors)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 # CKAN for GDI - User Portal
 
@@ -22,70 +22,60 @@ This project has two purposes:
 
 The CKAN images used are from the official CKAN [ckan-docker](https://github.com/ckan/ckan-docker-base) repo.
 
-The non-CKAN images are as follows:
+The services of the development stack (`docker-compose.yml`) are:
 
-* PostgreSQL: Official PostgreSQL image. Database files are stored in a named volume.
-* Solr: CKAN's [pre-configured Solr image](https://github.com/ckan/ckan-solr). Index data is stored in a named volume.
-* Redis: standard Redis image
-* NGINX: latest stable nginx image that includes SSL and Non-SSL endpoints
-* National Catalogue Mock: Python script to expose a synthetic RDF file, to test the Harvester.
+* `ckan-dev`: CKAN built from `ckan/Dockerfile.dev`, with the extensions of `src/` mounted in.
+* `db`: PostgreSQL. Database files are stored in a named volume.
+* `solr`: CKAN's [pre-configured Solr image](https://github.com/ckan/ckan-solr), with the schema of `ckanext-gdi-userportal`. Index data is stored in a named volume.
+* `redis`: standard Redis image, used by the harvester.
 
-CKAN and all the components are configured using environment variables that you can set in the `.env` file.
+CKAN and all the components are configured using environment variables. Copy `.env.example` to `.env`
+and change every value marked `changeme`. `.env.example` lists the variables with their defaults.
 
 ## 2. Before running locally
 
 * Install docker with support to docker compose v2.
   * Ensure you have enough computer resources, if you are using `colima`: `colima start --arch aarch64 --vm-type=vz --mount-type=virtiofs --vz-rosetta --cpu 4 --memory 10`
-* Ensure git submodules are pulled correctly after clone gdi-userportal-ckan-docker `git submodule update --init`
-* If you are using an Apple Silicon laptop (e.g., M1 or M2), add the following property to your `docker-compose.yml` file within ckan-dev service to ensure compatibility:
-
-```yaml
-services:
-
-  ckan-dev:
-    platform: linux/amd64
-    build:
-      context: ckan/
-      dockerfile: Dockerfile.dev
-```
+* Ensure git submodules are pulled correctly after clone gdi-userportal-ckan-docker: `git submodule update --init`
+* `ckan-dev` is built for `linux/amd64` in `docker-compose.yml`, so it also runs on Apple Silicon.
 
 ## 3. Useful commands
 
-### 3.1. Build and start dev environment
-Use this mode if you are making code changes to CKAN and either creating new extensions or making code changes to existing extensions. This mode also uses the `.env` file for config options.
+The scripts under `bin/` are thin wrappers around `docker compose -f docker-compose.yml`. Run them from
+the repository root.
 
-To develop local extensions use the `docker-compose.yml` file with help from the scripts under `bin`:
+### 3.1. Build and start the dev environment
 
-To build the images:
+Use this mode if you are changing CKAN or its extensions. It reads the `.env` file for config options.
+
 ```bash
-	bin/compose build
-```
-To install extensions from the `src` directory:
-```bash
-	bin/install_src
-```
-To start the containers:
-```bash
-	bin/compose up
-```
-Shut down and restart the whole ckan-dev container (use bin/compose up -d instead to reload new values from .env)
-```bash
-	bin/compose restart
+bin/compose build        # build the images
+bin/install_src          # install the extensions under src/ into the running ckan-dev container
+bin/compose up           # start the containers
+bin/compose up -d --force-recreate ckan-dev   # re-read a changed .env
+bin/compose restart      # restart the ckan-dev container only (a plain restart does not re-read .env)
 ```
 
 ### 3.2. Remove images and volumes
+
 ```bash
-  bin/compose down -v
+bin/compose down -v
 ```
+
+This also deletes the dev database and the Solr index. Take a backup first if you need the data.
 
 ### 3.3. Logs
+
 ```bash
-  bin/compose logs -f
+bin/compose logs -f
 ```
 
-### 3.4. Re-index SOLR
+### 3.4. Run CKAN commands and re-index Solr
+
+`bin/ckan` runs the `ckan` CLI inside the `ckan-dev` container:
+
 ```bash
-ckan -c ckan.ini search-index rebuild
+bin/ckan search-index rebuild
 ```
 
 ### 3.5. Metadata profiles
@@ -100,8 +90,8 @@ running the stack: [Updating an existing deployment](docs/metadata-profiles.md#u
 Stopping the database must not take CKAN down for good:
 
 ```bash
-sh bin/compose stop db     # API calls that need the database answer 500
-sh bin/compose start db    # the same calls work again, without restarting CKAN
+bin/compose stop db     # API calls that need the database answer 500
+bin/compose start db    # the same calls work again, without restarting CKAN
 ```
 
 The dev server recovers on its own. The production image runs uwsgi with `--need-app`: a worker that
@@ -111,34 +101,38 @@ database is back.
 
 ## 4. Accessing the running instance
 
-The ckan instance runs on port defined in CKAN_PORT_HOST (5500). Access it at http://localhost:5500.  
-A sysadmin account is created by default with the following credentials (defined in .env):
-- `CKAN_SYSADMIN_NAME=ckan_admin`
-- `CKAN_SYSADMIN_PASSWORD=test1234`
+CKAN listens on the host port `CKAN_PORT_HOST` (default 5500): http://localhost:5500.
 
+A sysadmin account is created at the first start from `CKAN_SYSADMIN_NAME`, `CKAN_SYSADMIN_PASSWORD`
+and `CKAN_SYSADMIN_EMAIL` in `.env`.
 
-## 5. installing new extensions
+## 5. Developing an extension in `src/`
+
+The `src/` directory is mounted into the `ckan-dev` container at `/srv/app/src_extensions`. At every
+container start, `ckan/docker-entrypoint.d/00_install_local_extensions.sh` installs each
+`src/ckanext-*` directory in editable mode, so an edit in `src/` is live without a rebuild. Run
+`bin/install_src` after adding an extension or changing its requirements, then `bin/compose restart`.
+
+## 6. Adding an extension
 
 The current agreement is:
 * Fork all the branches from the extension's repo into [GitHub GDI](https://github.com/GenomicDataInfrastructure).
-* Create and push a new branch following this standard: `user-portal-{original branch name/tag name}`
-  Reminder, prefer always to use a release/tag branch, over main/master branches, to avoid not tested changes.
+* Create and push a new branch following this standard: `user-portal-{original branch name/tag name}`.
+  Prefer a release/tag branch over main/master, to avoid untested changes.
 * Add a git submodule: `git submodule add {git_ssh_url} src/ckanext-{extension}`.
-* Add branch reference into `.gitmodules`, if not added.
-* Configure the extension via environment variables or via a setup script. Setup scripts must be added into `ckan/docker-entrypoint.d/`.
-* Ensure the extension is working as expected.
-* Update `ckan/Dockerfile` to install the new extension via pip.
+* Add the branch reference to `.gitmodules`, if it is not there yet.
+* Configure the extension via environment variables or via a setup script. Setup scripts go into `ckan/docker-entrypoint.d/`; see the README there for the run order.
+* Ensure the extension works in the dev stack (section 5).
+* Add it to the production image: install it with pip from its git tag in `ckan/Dockerfile`.
 
-All Docker Compose commands in this README will use the V2 version of Compose ie: `docker compose`. The older version (V1) 
-used the `docker-compose` command. Please see [Docker Compose](https://docs.docker.com/compose/compose-v2/) for
-more information.
+All Docker Compose commands in this README use Compose V2 (`docker compose`). The older V1 tool (`docker-compose`) is not supported.
+See [Docker Compose](https://docs.docker.com/compose/compose-v2/) for more information.
 
-Copying and License
--------------------
+## Copyright and license
 
-This work is licensed under multiple licenses. Here is a brief summary as of January 2024:
+This work is licensed under multiple licenses:
 
 - All original source code is licensed under [AGPL-3.0-only](./LICENSES/AGPL-3.0-only.txt), copyright (c) 2006-2024 Open Knowledge Foundation and contributors.
 - All documentation is licensed under [CC-BY-4.0](./LICENSES/CC-BY-4.0.txt).
-- github actions workflows are licensed under [Apache-2.0](./LICENSES/Apache-2.txt).
+- GitHub Actions workflows are licensed under [Apache-2.0](./LICENSES/Apache-2.0.txt).
 - For more accurate information, check the individual files.
