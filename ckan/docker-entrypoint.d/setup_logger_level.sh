@@ -4,9 +4,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-
-echo "[DEFAULT] Setting up debug"
+# Intentionally does nothing. The debug flag and the ckanext logger level are not set from
+# CKAN___DEBUG and CKAN___LOGGER_CKANEXT__LEVEL here. To set them, uncomment these lines:
 #ckan config-tool $CKAN_INI  -s DEFAULT "debug = $CKAN___DEBUG"
-
-echo "[logger_ckanext] Setting up level"
 #ckan config-tool $CKAN_INI  -s logger_ckanext "level = $CKAN___LOGGER_CKANEXT__LEVEL"

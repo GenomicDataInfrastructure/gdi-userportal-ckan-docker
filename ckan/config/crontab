@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Stichting Health-RI
 #
 # SPDX-License-Identifier: AGPL-3.0-only
-# run job every hour
+# start a harvest gather every 15 minutes
 */15 * * * * /usr/local/bin/ckan -c /srv/app/ckan.ini harvester run
 # run harvest log cleanup weekly, every Sunday at 5 AM
 0 5 * * 0 /usr/local/bin/ckan -c /srv/app/ckan.ini harvester clean-harvest-log
