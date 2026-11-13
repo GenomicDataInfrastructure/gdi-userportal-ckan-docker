@@ -22,9 +22,9 @@ RUN set -eux; \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.5.2#egg=ckanext-dcat \
         -e git+https://github.com/ckan/ckanext-dataset-series.git@v0.1.1#egg=ckanext-dataset-series \
         -e git+https://github.com/ckan/ckanext-harvest.git@v1.6.2#egg=ckanext-harvest \
-        'ckanext-scheming[requirements] @ git+https://github.com/ckan/ckanext-scheming.git@release-3.1.0' \
+        'ckanext-scheming[requirements] @ git+https://github.com/ckan/ckanext-scheming.git@ea79dc58bf1b0019e4336c5d2c2925aa9d7f39ed' \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-fairdatapoint.git@v1.7.4#egg=ckanext-fairdatapoint \
-        -e git+https://github.com/ckan/ckanext-fluent.git#egg=ckanext-fluent; \
+        -e git+https://github.com/ckan/ckanext-fluent.git@eb5581ac952cd1d0d3ceac78b43adb97e7068895#egg=ckanext-fluent; \
     for requirement in \
         ckanext-gdi-userportal \
         ckanext-dcat \
