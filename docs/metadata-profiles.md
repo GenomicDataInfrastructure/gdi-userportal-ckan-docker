@@ -47,7 +47,8 @@ GDI_METADATA_PROFILES="healthdcat_r8 gdi_current" GDI_METADATA_MAIN_PROFILE=gdi_
 Recreate the container (`bin/compose up -d --force-recreate ckan-dev`): a plain `restart` reruns
 the generator too, but only a recreate picks up a changed `.env`.
 
-The generator runs in `start_ckan.sh` and `start_ckan_development.sh`, **before** `prerun.py`
+The generator runs from the two start scripts (`start_ckan.sh` and `start_ckan_development.sh`, through
+`start_ckan_common.sh`), **before** `prerun.py`
 (prerun loads CKAN and with it the schema). It writes `dataset.yaml` and `provenance.json` to
 `/srv/app/generated` and these CKAN options, which runtime code reads instead of the environment:
 
@@ -86,9 +87,10 @@ key of a distribution.
 
 The dev compose mounts a named volume at `/srv/app`, so `ckan.ini` inside the container is the
 volume's copy, not the one the image was built with. The start script is the exception: the compose
-file bind-mounts `ckan/setup/start_ckan_development.sh` over the volume's copy, so a recreate always
-runs the script of the checkout, including the generator and the Solr sync. A volume that predates
-that mount keeps its old start script until the container is recreated once with it. Do not use
+file bind-mounts `ckan/setup/start_ckan_development.sh` and its shared steps
+(`start_ckan_common.sh`) over the volume's copies, so a recreate always runs the scripts of the
+checkout, including the generator and the Solr sync. It mounts `requirements-pins.txt` the same way.
+A volume that predates a mount keeps its old file until the container is recreated once with it. Do not use
 `down -v`: it also deletes the dev database.
 
 ## Select a profile per harvest source
@@ -319,7 +321,8 @@ core, so do the steps in this order:
 
 1. **Check out the submodules** at the pinned revisions with `git submodule update --init`. To move an
    extension to a newer revision, check that revision out inside `src/<extension>` and commit the
-   new pointer in this repository. Then run `bin/install_src` so the running container uses it.
+   new pointer in this repository. Then run `bin/compose restart`: the start script reinstalls the
+   extensions in `src/` with the pins applied (README, section 5).
 2. **Set the profiles** in `.env` (see *Select profiles*). Unset keeps the existing model
    (`gdi_current`).
 3. **Recreate the container** (`bin/compose up -d --force-recreate ckan-dev`). The start script
