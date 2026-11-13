@@ -4,80 +4,38 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+# The development start. The steps it shares with the production start are in start_ckan_common.sh.
+# shellcheck source=ckan/setup/start_ckan_common.sh
+. "${APP_DIR}/start_ckan_common.sh"
+
 # The development image always runs with debug on, whatever CKAN___DEBUG says.
 echo "Enabling debug mode"
-ckan config-tool $CKAN_INI -s DEFAULT "debug = true"
+ckan config-tool "$CKAN_INI" -s DEFAULT "debug = true"
 
-# Generate the secret keys while the ini still has the empty SECRET_KEY placeholder.
-if grep -qE "SECRET_KEY ?= ?$" "$CKAN_INI"
-then
-    echo "Setting SECRET_KEY in ini file"
-    ckan config-tool $CKAN_INI "SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe())')"
-    ckan config-tool $CKAN_INI "WTF_CSRF_SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe())')"
-    JWT_SECRET=$(python3 -c 'import secrets; print("string:" + secrets.token_urlsafe())')
-    ckan config-tool $CKAN_INI "api_token.jwt.encode.secret=${JWT_SECRET}"
-    ckan config-tool $CKAN_INI "api_token.jwt.decode.secret=${JWT_SECRET}"
-fi
-
-if [[ -n "${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY:-}" ]]
-then
-    echo "Adding bioportal_api_key to ini file."
-    ckan config-tool $CKAN_INI "ckanext.fairdatapoint.bioportal_api_key=${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY}"
-fi
+set_secret_keys
+set_extension_keys
 
 # Update the plugins setting in the ini file with the values defined in the env var
 echo "Loading the following plugins: $CKAN__PLUGINS"
-ckan config-tool $CKAN_INI "ckan.plugins = $CKAN__PLUGINS"
+ckan config-tool "$CKAN_INI" "ckan.plugins = $CKAN__PLUGINS"
 
-# Install local extension requirements early so CKAN CLI commands that load plugins
+# Install the extensions of src/ early, so CKAN CLI commands that load plugins
 # (db init/upgrade, custom CLI, etc.) don't randomly fail on fresh volumes.
-if [[ -f "/docker-entrypoint.d/00_install_local_extensions.sh" ]]
+LOCAL_EXTENSIONS_SCRIPT="00_install_local_extensions.sh"
+if [[ -f "/docker-entrypoint.d/${LOCAL_EXTENSIONS_SCRIPT}" ]]
 then
     echo "Installing local extension requirements (before prerun/db init)..."
-    if ! /bin/bash "/docker-entrypoint.d/00_install_local_extensions.sh"
+    if ! /bin/bash "/docker-entrypoint.d/${LOCAL_EXTENSIONS_SCRIPT}"
     then
         echo "[local-extensions] failed...not starting CKAN."
         exit 1
     fi
 fi
 
-# Same generator step as start_ckan.sh; it must run before prerun.py.
-echo "[metadata-profiles] Generating the dataset schema"
-if ! METADATA_PROFILE_CONFIG=$(PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.generator --output-dir "${APP_DIR}/generated")
-then
-    echo "[metadata-profiles] failed...not starting CKAN."
-    exit 1
-fi
-mapfile -t METADATA_PROFILE_OPTIONS <<< "$METADATA_PROFILE_CONFIG"
-ckan config-tool $CKAN_INI -s app:main "${METADATA_PROFILE_OPTIONS[@]}"
-
-# Same Solr sync as start_ckan.sh; a failure never stops CKAN.
-echo "[solr-schema] Syncing the Solr schema"
-PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.solr_schema sync \
-    --ckan-ini "$CKAN_INI" \
-    || echo "[solr-schema] could not sync the Solr schema, see above"
-
-# Run the prerun script to init CKAN and create the default admin user.
-# It runs as root, so point it at the ckan user's site-packages, where the image installs the extensions.
-if ! PYTHONUSERBASE="${APP_DIR}/.local" python3 prerun.py
-then
-    echo "[prerun] failed...not starting CKAN."
-    exit 1
-fi
-
-# Run any startup scripts provided by images extending this one
-if [[ -d "/docker-entrypoint.d" ]]
-then
-    for f in /docker-entrypoint.d/*; do
-        case "$f" in
-            /docker-entrypoint.d/00_install_local_extensions.sh) echo "$0: Skipping $f (already ran earlier)";;
-            *.sh)     echo "$0: Running init file $f"; . "$f" ;;
-            *.py)     echo "$0: Running init file $f"; python3 "$f"; echo ;;
-            *)        echo "$0: Ignoring $f (not an sh or py file)" ;;
-        esac
-        echo
-    done
-fi
+generate_metadata_profile_schema
+sync_solr_schema
+run_prerun
+run_entrypoint_scripts "$LOCAL_EXTENSIONS_SCRIPT"
 
 CKAN_RUN="/usr/local/bin/ckan -c $CKAN_INI run -H 0.0.0.0"
 CKAN_OPTIONS=""

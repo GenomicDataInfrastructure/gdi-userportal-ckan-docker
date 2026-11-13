@@ -38,6 +38,7 @@ services:
       - home_dir:/srv/app/
       # home_dir keeps the files of the first run; these mounts make the repo's copies the ones that run.
       - ./ckan/setup/start_ckan_development.sh:/srv/app/start_ckan_development.sh:ro
+      - ./ckan/setup/start_ckan_common.sh:/srv/app/start_ckan_common.sh:ro
       - ./ckan/requirements-pins.txt:/srv/app/requirements-pins.txt:ro
     restart: unless-stopped
     healthcheck:
