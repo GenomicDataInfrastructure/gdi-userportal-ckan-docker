@@ -26,10 +26,10 @@ organisation on GitHub.
 
 ## Setting up
 
-1. Install Docker with Compose v2.
-2. Check out the submodules: `git submodule update --init`.
-3. Copy `.env.example` to `.env` and replace every `changeme` value. Never commit `.env`.
-4. Build and start the stack: `bin/compose build`, `bin/install_src`, `bin/compose up`.
+1. `.env` comes with the clone and holds the development defaults. Change it for your machine if you need to, but do not commit real credentials. `.env.example` documents every variable.
+2. Install Docker with Compose v2.
+3. Check out the submodules: `git submodule update --init`.
+4. Build and start the stack: `bin/compose build`, then `bin/compose up`.
 
 The README describes the commands and the services in more detail.
 

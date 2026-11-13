@@ -29,13 +29,15 @@ The services of the development stack (`docker-compose.yml`) are:
 * `solr`: CKAN's [pre-configured Solr image](https://github.com/ckan/ckan-solr), with the schema of `ckanext-gdi-userportal`. Index data is stored in a named volume.
 * `redis`: standard Redis image, used by the harvester.
 
-CKAN and all the components are configured using environment variables. Copy `.env.example` to `.env`
-and change every value marked `changeme`. `.env.example` lists the variables with their defaults.
+CKAN and all the components are configured using environment variables. `.env` holds the development
+defaults and is part of the repository, because compose reads it for every service. `.env.example`
+lists every variable with its default, including the optional ones that `.env` leaves out.
 
 ## 2. Before running locally
 
 * Install docker with support to docker compose v2.
   * Ensure you have enough computer resources, if you are using `colima`: `colima start --arch aarch64 --vm-type=vz --mount-type=virtiofs --vz-rosetta --cpu 4 --memory 10`
+* The settings are in `.env`, which comes with the clone. Do not commit real credentials to it: a deployment sets the variables in the environment of the container instead.
 * Ensure git submodules are pulled correctly after clone gdi-userportal-ckan-docker: `git submodule update --init`
 * `ckan-dev` is built for `linux/amd64` in `docker-compose.yml`, so it also runs on Apple Silicon.
 
@@ -50,7 +52,7 @@ Use this mode if you are changing CKAN or its extensions. It reads the `.env` fi
 
 ```bash
 bin/compose build        # build the images
-bin/install_src          # install the extensions under src/ into the running ckan-dev container
+bin/install_src          # install the extensions of src/ in a one-off ckan-dev container (see section 5)
 bin/compose up           # start the containers
 bin/compose up -d --force-recreate ckan-dev   # re-read a changed .env
 bin/compose restart      # restart the ckan-dev container only (a plain restart does not re-read .env)
@@ -110,8 +112,15 @@ and `CKAN_SYSADMIN_EMAIL` in `.env`.
 
 The `src/` directory is mounted into the `ckan-dev` container at `/srv/app/src_extensions`. At every
 container start, `ckan/docker-entrypoint.d/00_install_local_extensions.sh` installs each
-`src/ckanext-*` directory in editable mode, so an edit in `src/` is live without a rebuild. Run
-`bin/install_src` after adding an extension or changing its requirements, then `bin/compose restart`.
+`src/ckanext-*` directory in editable mode, so an edit in `src/` is live without a rebuild. Its
+requirements are installed with the security pins as constraints. After adding an extension or changing
+its requirements, run `bin/compose restart`: the start runs the install again.
+
+`bin/install_src` runs the same install script in a one-off container, as root and without starting
+CKAN. Use it to install after a change without restarting the container.
+
+PostgreSQL is published on `127.0.0.1:5432` for local tools only (for example `psql`). CKAN reaches the
+database over the compose network as `db`, so nothing else needs the host port.
 
 ## 6. Adding an extension
 
