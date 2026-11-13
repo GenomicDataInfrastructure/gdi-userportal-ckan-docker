@@ -4,13 +4,12 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-# Set debug to true
+# The development image always runs with debug on, whatever CKAN___DEBUG says.
 echo "Enabling debug mode"
 ckan config-tool $CKAN_INI -s DEFAULT "debug = true"
 
-# Set up the Secret key used by Beaker and Flask
-# This can be overriden using a CKAN___BEAKER__SESSION__SECRET env var
-if grep -qE "SECRET_KEY ?= ?$" ckan.ini
+# Generate the secret keys while the ini still has the empty SECRET_KEY placeholder.
+if grep -qE "SECRET_KEY ?= ?$" "$CKAN_INI"
 then
     echo "Setting SECRET_KEY in ini file"
     ckan config-tool $CKAN_INI "SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe())')"
@@ -56,7 +55,11 @@ PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_pac
 
 # Run the prerun script to init CKAN and create the default admin user.
 # It runs as root, so point it at the ckan user's site-packages, where the image installs the extensions.
-PYTHONUSERBASE="${APP_DIR}/.local" python3 prerun.py
+if ! PYTHONUSERBASE="${APP_DIR}/.local" python3 prerun.py
+then
+    echo "[prerun] failed...not starting CKAN."
+    exit 1
+fi
 
 # Run any startup scripts provided by images extending this one
 if [[ -d "/docker-entrypoint.d" ]]

@@ -4,15 +4,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-if [[ $CKAN__PLUGINS == *"datapusher"* ]]; then
-    # Add ckan.datapusher.api_token to the CKAN config file (updated with corrected value later)
-    echo "Setting a temporary value for ckan.datapusher.api_token"
-    ckan config-tool $CKAN_INI ckan.datapusher.api_token=xxx
-fi
-
-# Set up the Secret key used by Beaker and Flask
-# This can be overriden using a CKAN___BEAKER__SESSION__SECRET env var
-if grep -qE "SECRET_KEY ?= ?$" ckan.ini
+# Generate the secret keys while the ini still has the empty SECRET_KEY placeholder.
+if grep -qE "SECRET_KEY ?= ?$" "$CKAN_INI"
 then
     echo "Setting SECRET_KEY in ini file"
     ckan config-tool $CKAN_INI "SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe())')"
