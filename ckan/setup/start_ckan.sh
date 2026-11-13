@@ -4,67 +4,16 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-# Generate the secret keys while the ini still has the empty SECRET_KEY placeholder.
-if grep -qE "SECRET_KEY ?= ?$" "$CKAN_INI"
-then
-    echo "Setting SECRET_KEY in ini file"
-    ckan config-tool $CKAN_INI "SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe())')"
-    ckan config-tool $CKAN_INI "WTF_CSRF_SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe())')"
-    JWT_SECRET=$(python3 -c 'import secrets; print("string:" + secrets.token_urlsafe())')
-    ckan config-tool $CKAN_INI "api_token.jwt.encode.secret=${JWT_SECRET}"
-    ckan config-tool $CKAN_INI "api_token.jwt.decode.secret=${JWT_SECRET}"
-fi
+# The production start. The steps it shares with the development start are in start_ckan_common.sh.
+# shellcheck source=ckan/setup/start_ckan_common.sh
+. "${APP_DIR}/start_ckan_common.sh"
 
-# Written on every start, so the ini follows the environment after a restart.
-ckan config-tool $CKAN_INI "ckan.harvest.s3_rdf.aws_access_key=${CKAN_HARVEST_S3_RDF_AWS_ACCESS_KEY}"
-ckan config-tool $CKAN_INI "ckan.harvest.s3_rdf.aws_secret_key=${CKAN_HARVEST_S3_RDF_AWS_SECRET_KEY}"
-
-if [[ -n "${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY:-}" ]]
-then
-    echo "Adding bioportal_api_key to ini file."
-    ckan config-tool $CKAN_INI "ckanext.fairdatapoint.bioportal_api_key=${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY}"
-fi
-
-# Generate the dataset schema for the enabled metadata profiles (GDI_METADATA_PROFILES,
-# GDI_METADATA_MAIN_PROFILE) and point CKAN at it. This must run before prerun.py: prerun loads
-# CKAN, and with it the schema that scheming is configured with.
-echo "[metadata-profiles] Generating the dataset schema"
-if ! METADATA_PROFILE_CONFIG=$(PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.generator --output-dir "${APP_DIR}/generated")
-then
-    echo "[metadata-profiles] failed...not starting CKAN."
-    exit 1
-fi
-mapfile -t METADATA_PROFILE_OPTIONS <<< "$METADATA_PROFILE_CONFIG"
-ckan config-tool $CKAN_INI -s app:main "${METADATA_PROFILE_OPTIONS[@]}"
-
-# Sync the Solr core with the enabled profiles (see profile_packs/README.md, "Solr schema"): the core
-# is created once from the Solr image, so a new profile field would otherwise not reach it. A failure
-# is logged and never stops CKAN; search keeps working with the schema the core has. It reads every
-# schema of scheming.dataset_schemas (CKAN_INI) and removes the fields no schema describes any more.
-echo "[solr-schema] Syncing the Solr schema"
-PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.solr_schema sync \
-    --ckan-ini "$CKAN_INI" \
-    || echo "[solr-schema] could not sync the Solr schema, see above"
-
-# Run the prerun script to init CKAN and create the default admin user.
-# It runs as root, so point it at the ckan user's site-packages, where the image installs the extensions.
-if ! PYTHONUSERBASE="${APP_DIR}/.local" python3 prerun.py
-then
-    echo "[prerun] failed...not starting CKAN."
-    exit 1
-fi
-
-# Run any startup scripts provided by images extending this one
-if [[ -d "/docker-entrypoint.d" ]]
-then
-    for f in /docker-entrypoint.d/*; do
-        case "$f" in
-            *.sh)     echo "$0: Running init file $f"; . "$f" ;;
-            *.py)     echo "$0: Running init file $f"; python3 "$f"; echo ;;
-            *)        echo "$0: Ignoring $f (not an sh or py file)" ;;
-        esac
-    done
-fi
+set_secret_keys
+set_extension_keys
+generate_metadata_profile_schema
+sync_solr_schema
+run_prerun
+run_entrypoint_scripts
 
 # --need-app: a worker that cannot load CKAN (the database is down) makes uwsgi exit, so the container
 # restarts and prerun.py waits for the database, instead of uwsgi answering 500 until someone

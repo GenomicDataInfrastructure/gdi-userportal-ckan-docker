@@ -83,7 +83,7 @@ RUN crontab -u ckan /etc/cron.d/ckan-cron
 COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
 COPY --chown=ckan-sys:ckan-sys setup/prerun.py ${APP_DIR}
-COPY --chown=ckan-sys:ckan-sys setup/start_ckan.sh ${APP_DIR}
+COPY --chown=ckan-sys:ckan-sys setup/start_ckan_common.sh setup/start_ckan.sh ${APP_DIR}/
 
 # libsqlite3-0 is pinned for CVE-2025-6965: remove the pin once the ckan base image ships the fix
 # (https://github.com/ckan/ckan-docker/issues/231).
