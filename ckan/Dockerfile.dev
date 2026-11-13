@@ -48,8 +48,7 @@ RUN set -eux; \
     python -m pip install --no-cache-dir --only-binary :all: --require-hashes --upgrade -r "${APP_DIR}/requirements-pins.txt"; \
     python -m pip check
 
-### Install everything we need for the harvester
-# Install cron and supervisor.
+### Install cron and supervisor for the harvester.
 # Upgrade the base image's Debian packages first: ckan-base lags behind Debian security updates.
 # Kernel headers are useless in a container and their fixes ship as new packages that upgrade skips, so remove them.
 # libsqlite3-0 is pinned for CVE-2025-6965: remove the pin once the ckan base image ships the fix
