@@ -30,6 +30,26 @@ then
     ckan config-tool $CKAN_INI "ckanext.fairdatapoint.bioportal_api_key=${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY}"
 fi
 
+# Generate the dataset schema for the enabled metadata profiles (GDI_METADATA_PROFILES,
+# GDI_METADATA_MAIN_PROFILE) and point CKAN at it. This must run before prerun.py: prerun loads
+# CKAN, and with it the schema that scheming is configured with.
+echo "[metadata-profiles] Generating the dataset schema"
+if ! METADATA_PROFILE_CONFIG=$(PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.generator --output-dir "${APP_DIR}/generated")
+then
+    echo "[metadata-profiles] failed...not starting CKAN."
+    exit 1
+fi
+mapfile -t METADATA_PROFILE_OPTIONS <<< "$METADATA_PROFILE_CONFIG"
+ckan config-tool $CKAN_INI -s app:main "${METADATA_PROFILE_OPTIONS[@]}"
+
+# Sync the Solr core with the enabled profiles (see profile_packs/README.md, "Solr schema"): the core
+# is created once from the Solr image, so a new profile field would otherwise not reach it. A failure
+# is logged and never stops CKAN; search keeps working with the schema the core has.
+echo "[solr-schema] Syncing the Solr schema"
+PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.solr_schema sync \
+    --dataset-schema "${APP_DIR}/generated/dataset.yaml" \
+    || echo "[solr-schema] could not sync the Solr schema, see above"
+
 # Run the prerun script to init CKAN and create the default admin user.
 # It runs as root, so point it at the ckan user's site-packages, where the image installs the extensions.
 PYTHONUSERBASE="${APP_DIR}/.local" python3 prerun.py
