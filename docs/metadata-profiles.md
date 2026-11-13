@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Stichting Health-RI
+
+SPDX-License-Identifier: CC-BY-4.0
+-->
 # Metadata profiles
 
 One CKAN deployment can load the existing metadata model (`gdi_current`), HealthDCAT-AP Release 8
