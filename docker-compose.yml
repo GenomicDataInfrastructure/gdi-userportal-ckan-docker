@@ -36,8 +36,9 @@ services:
       - site_packages:/usr/local/lib/python3.10/site-packages
       - local_bin:/usr/local/bin
       - home_dir:/srv/app/
-      # home_dir keeps the start script of the first run; this mount makes the repo's copy the one that runs.
+      # home_dir keeps the files of the first run; these mounts make the repo's copies the ones that run.
       - ./ckan/setup/start_ckan_development.sh:/srv/app/start_ckan_development.sh:ro
+      - ./ckan/requirements-pins.txt:/srv/app/requirements-pins.txt:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:5000/api/3/action/status_show"]

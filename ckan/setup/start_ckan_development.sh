@@ -34,7 +34,11 @@ ckan config-tool $CKAN_INI "ckan.plugins = $CKAN__PLUGINS"
 if [[ -f "/docker-entrypoint.d/00_install_local_extensions.sh" ]]
 then
     echo "Installing local extension requirements (before prerun/db init)..."
-    /bin/bash "/docker-entrypoint.d/00_install_local_extensions.sh"
+    if ! /bin/bash "/docker-entrypoint.d/00_install_local_extensions.sh"
+    then
+        echo "[local-extensions] failed...not starting CKAN."
+        exit 1
+    fi
 fi
 
 # Same generator step as start_ckan.sh; it must run before prerun.py.

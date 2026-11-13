@@ -15,9 +15,16 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_ROOT_USER_ACTION=ignore \
     PIP_SRC=${APP_DIR}/src
 
+# Security pins (certifi, PyJWT and others; see requirements-pins.txt for the CVEs).
+# pip turns on hash checking for every package as soon as a constraints file has hashes, so the
+# plugin installs below are constrained by the same versions without their hashes. The hashed
+# install after them checks the files themselves.
+COPY --chown=ckan-sys:ckan-sys requirements-pins.txt ${APP_DIR}/requirements-pins.txt
+
 RUN set -eux; \
-    python -m pip install --upgrade --no-cache-dir pip "setuptools<82,>=44.1.0" wheel; \
-    python -m pip install --no-cache-dir \
+    sed -E '/^[[:space:]]*(#|--hash)/d; s/[[:space:]\\]+$//' "${APP_DIR}/requirements-pins.txt" > "${APP_DIR}/requirements-constraints.txt"; \
+    python -m pip install --upgrade --no-cache-dir -c "${APP_DIR}/requirements-constraints.txt" pip "setuptools<82,>=44.1.0" wheel; \
+    python -m pip install --no-cache-dir -c "${APP_DIR}/requirements-constraints.txt" \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-gdi-userportal.git@v1.14.3#egg=ckanext-gdi-userportal \
         -e git+https://github.com/GenomicDataInfrastructure/gdi-userportal-ckanext-dcat.git@v2.5.2#egg=ckanext-dcat \
         -e git+https://github.com/ckan/ckanext-dataset-series.git@v0.1.1#egg=ckanext-dataset-series \
@@ -35,17 +42,15 @@ RUN set -eux; \
     ; do \
         req_file="${APP_DIR}/src/${requirement}/requirements.txt"; \
         if [ -f "${req_file}" ]; then \
-            python -m pip install --no-cache-dir -r "${req_file}"; \
+            python -m pip install --no-cache-dir -c "${APP_DIR}/requirements-constraints.txt" -r "${req_file}"; \
         fi; \
     done; \
-    python -m pip install --no-cache-dir \
+    python -m pip install --no-cache-dir -c "${APP_DIR}/requirements-constraints.txt" \
         pytest-ckan \
-        factory-boy>=2; \
+        'factory-boy>=2'; \
     python -m pip check
 
-# Security pins (certifi, PyJWT and others; see requirements-pins.txt for the CVEs).
-# Installed after every plugin requirements file so none can pull an older version back in.
-COPY --chown=ckan-sys:ckan-sys requirements-pins.txt ${APP_DIR}/requirements-pins.txt
+# The hashed install of the pins, after every plugin requirements file.
 RUN set -eux; \
     python -m pip install --no-cache-dir --only-binary :all: --require-hashes -r "${APP_DIR}/requirements-pins.txt"; \
     python -m pip check

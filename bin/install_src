@@ -4,7 +4,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+# Install the extensions of src/ into the ckan-dev container with the same script the container runs
+# at every start, so the security pins apply. The installs go to the site_packages volume.
 set -e
-ROOT="$(dirname ${BASH_SOURCE[0]})/.."
+ROOT="$(dirname "${BASH_SOURCE[0]}")/.."
 
-docker compose -f "${ROOT}/docker-compose.yml" run -u root ckan-dev ./install_src.sh
+docker compose -f "${ROOT}/docker-compose.yml" run --rm -u root ckan-dev /bin/bash /docker-entrypoint.d/00_install_local_extensions.sh
