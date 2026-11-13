@@ -13,9 +13,11 @@ then
     JWT_SECRET=$(python3 -c 'import secrets; print("string:" + secrets.token_urlsafe())')
     ckan config-tool $CKAN_INI "api_token.jwt.encode.secret=${JWT_SECRET}"
     ckan config-tool $CKAN_INI "api_token.jwt.decode.secret=${JWT_SECRET}"
-    ckan config-tool $CKAN_INI "ckan.harvest.s3_rdf.aws_access_key=${CKAN_HARVEST_S3_RDF_AWS_ACCESS_KEY}"
-    ckan config-tool $CKAN_INI "ckan.harvest.s3_rdf.aws_secret_key=${CKAN_HARVEST_S3_RDF_AWS_SECRET_KEY}"
 fi
+
+# Written on every start, so the ini follows the environment after a restart.
+ckan config-tool $CKAN_INI "ckan.harvest.s3_rdf.aws_access_key=${CKAN_HARVEST_S3_RDF_AWS_ACCESS_KEY}"
+ckan config-tool $CKAN_INI "ckan.harvest.s3_rdf.aws_secret_key=${CKAN_HARVEST_S3_RDF_AWS_SECRET_KEY}"
 
 if [[ -n "${CKANEXT_FAIRDATAPOINT_BIOPORTAL_API_KEY:-}" ]]
 then
@@ -74,7 +76,7 @@ UWSGI_OPTS="--socket /tmp/uwsgi.sock \
             --master --enable-threads \
             --lazy-apps --need-app \
             -p 2 -L -b 32768 --vacuum \
-            --harakiri $UWSGI_HARAKIRI"
+            ${UWSGI_HARAKIRI:+--harakiri $UWSGI_HARAKIRI}"
 
 supervisord --configuration /etc/supervisord.d/ckan.conf
 # Start uwsgi as ckan while keeping the container runtime root for cron.
