@@ -2,9 +2,23 @@
 
 One CKAN deployment can load the existing metadata model (`gdi_current`), HealthDCAT-AP Release 8
 (`healthdcat_r8`) or both, chosen when the container starts. A FAIR Data Point harvest source can
-say which profile its FDP uses; if it says nothing, the deployment's main profile applies. The
-design and its decisions are in ADR 0001. Already running the stack? Start at
-[Updating an existing deployment](#updating-an-existing-deployment).
+say which profile its FDP uses; if it says nothing, the deployment's main profile applies. Already
+running the stack? Start at [Updating an existing deployment](#updating-an-existing-deployment).
+
+## Design decisions
+
+- A profile is a *pack*: a manifest plus the scheming fragments it uses. The generator merges the
+  enabled packs into one dataset schema before `prerun.py` loads CKAN. A wrong configuration stops
+  the container before CKAN starts.
+- Packs are ordered by precedence. A field that two packs define differently must be listed in the
+  `redefines` of the later pack, and the earlier pack wins. An undeclared difference stops the start.
+- The harvest source key `metadata_profile` selects a pack. The older `profile` key stays a raw RDF
+  profile chain. A source with both keys is rejected.
+- Conformance is computed from each enabled profile's mandatory properties when someone asks for it.
+  It is never stored and never enforces anything.
+- Retiring a profile hides its datasets; it does not delete them. Pruning is a dry run unless
+  `--delete` is given.
+- The export selector `?metadata_profile=<pack>` is not implemented. See *Known limits*.
 
 How it works: each profile is a *pack* in `ckanext-gdi-userportal`. When the
 container starts, a generator merges the schema fragments of the enabled packs into one scheming
@@ -30,7 +44,7 @@ GDI_METADATA_PROFILES="healthdcat_r8 gdi_current" GDI_METADATA_MAIN_PROFILE=gdi_
                                                      # both; R8 wins the shared fields it extends
 ```
 
-Recreate the container (`sh bin/compose up -d --force-recreate ckan-dev`): a plain `restart` reruns
+Recreate the container (`bin/compose up -d --force-recreate ckan-dev`): a plain `restart` reruns
 the generator too, but only a recreate picks up a changed `.env`.
 
 The generator runs in `start_ckan.sh` and `start_ckan_development.sh`, **before** `prerun.py`
@@ -51,11 +65,9 @@ differently without a declared precedence, or a pack that names an RDF profile t
 installed.
 
 **The order matters for the fields R8 defines differently.** The `redefines` list of
-[`healthdcat_r8.yaml`](../src/ckanext-gdi-userportal/ckanext/gdi_userportal/profile_packs/packs/healthdcat_r8.yaml)
+`healthdcat_r8.yaml` (in `ckanext/gdi_userportal/profile_packs/packs/` of `ckanext-gdi-userportal`)
 names them; the contact point, the location, the agents, the activity, the relationship and the data
-service are the structural ones, and
-[the pack README](../src/ckanext-gdi-userportal/ckanext/gdi_userportal/profile_packs/README.md)
-describes each. What only `gdi_current` has (the HealthDCAT-AP publisher type and note, the dataset
+service are the structural ones, and the `profile_packs` README in the same package describes each. What only `gdi_current` has (the HealthDCAT-AP publisher type and note, the dataset
 license, the identifier and country of an agent, the name of a contact point, the label of a location)
 is left out of R8. With both packs enabled the pack listed first decides: list `healthdcat_r8` first to
 get the R8 versions. The main profile is independent of the order.
@@ -199,7 +211,7 @@ Nothing is stored for any of these; each is computed from the dataset when you a
 
   ```
   GET /api/3/action/gdi_metadata_profile_conformance_report[?profile=<pack>]
-  sh bin/ckan gdi-userportal profiles conformance [--profile <pack>] [--json]
+  bin/ckan gdi-userportal profiles conformance [--profile <pack>] [--json]
   ```
 
   For each profile it counts what was checked against it and lists what does not conform, in three
@@ -218,7 +230,8 @@ The mandatory properties of `healthdcat_r8` are **generated** from R8's own
 
 ## Add a profile
 
-Details and the merge rules are in `src/ckanext-gdi-userportal/ckanext/gdi_userportal/profile_packs/README.md`.
+Details and the merge rules are in the `profile_packs` README of `ckanext-gdi-userportal`
+(`ckanext/gdi_userportal/profile_packs/README.md` in that submodule).
 
 1. **Fragments**: put the scheming fields the pack needs under `profile_packs/fragments/`. Reuse the
    neutral fragments; a fragment is a contiguous slice of the form, because field order is the form
@@ -235,6 +248,7 @@ Details and the merge rules are in `src/ckanext-gdi-userportal/ckanext/gdi_userp
    `classes: {distribution, series}` for the properties a profile makes mandatory on those classes (R8 takes
    them from its SHACL shapes, not from the cardinality rules); they are copied into the generated file.
 5. **Tests** (host, no CKAN needed):
+   From the root of the `ckanext-gdi-userportal` submodule:
    `uv run --no-project --with pyyaml --with sqlalchemy --with pytest python -I -m pytest ckanext/gdi_userportal/tests/profile_packs`
 6. Enable it with `GDI_METADATA_PROFILES`, recreate the container and check the schema (below).
 
@@ -247,8 +261,8 @@ Details and the merge rules are in `src/ckanext-gdi-userportal/ckanext/gdi_userp
 3. **Optionally prune** those extras. The command is a **dry run unless `--delete` is given**:
 
    ```
-   sh bin/ckan gdi-userportal profiles prune             # list what would go
-   sh bin/ckan gdi-userportal profiles prune --delete    # remove it, after confirmation (-y skips)
+   bin/ckan gdi-userportal profiles prune             # list what would go
+   bin/ckan gdi-userportal profiles prune --delete    # remove it, after confirmation (-y skips)
    ```
 
    It lists, per dataset, the extras whose field only a retired pack defines (keys only, never
@@ -290,15 +304,12 @@ dataset that no harvest source created is never hidden either: nothing says whic
 ## Solr schema
 
 The Solr core is created once from the image and lives in a volume, so rebuilding the image does not
-update an existing core. At every start the start scripts run `solr_schema sync`: it adds the dataset
-fields of the enabled profiles to the core as explicit fields (multi valued when the field is a list)
-and applies changes of `solr/schema.xml` through the Solr Schema API.
-It reads every dataset schema CKAN is configured with (`scheming.dataset_schemas`: the generated dataset
-schema and the series schema), and removes the explicit fields that none of them and `solr/schema.xml` describe any
-more (for example those of a field that a profile no longer has). `--keep-leftovers` leaves them in place. A
-failure does not stop CKAN (see the `[solr-schema]` lines of the container log). After it reports changes, run `sh bin/ckan search-index rebuild` so that datasets indexed
-earlier get the new fields. Preview with `--dry-run`; details in
-`src/ckanext-gdi-userportal/ckanext/gdi_userportal/profile_packs/README.md`.
+update an existing core. At every start the start scripts run `solr_schema sync`, which adds the
+dataset fields of the enabled profiles to the core and removes the fields that no configured schema
+describes any more. A failure does not stop CKAN; the `[solr-schema]` lines of the container log say
+what happened. After the sync reports changes, run `bin/ckan search-index rebuild` so that datasets
+indexed earlier get the new fields. The options (`--dry-run`, `--keep-leftovers`) and the details are
+in the `profile_packs` README of `ckanext-gdi-userportal`.
 
 ## Updating an existing deployment
 
@@ -306,20 +317,21 @@ For a developer or operator updating a running stack. It touches three extension
 (`ckanext-gdi-userportal`, `ckanext-dcat`, `ckanext-fairdatapoint`), the start scripts and the Solr
 core, so do the steps in this order:
 
-1. **Update the submodules** to the revisions you are updating to (`git submodule update --init`),
-   then `sh bin/install_src` so the running container uses them.
+1. **Check out the submodules** at the pinned revisions with `git submodule update --init`. To move an
+   extension to a newer revision, check that revision out inside `src/<extension>` and commit the
+   new pointer in this repository. Then run `bin/install_src` so the running container uses it.
 2. **Set the profiles** in `.env` (see *Select profiles*). Unset keeps the existing model
    (`gdi_current`).
-3. **Recreate the container** (`sh bin/compose up -d --force-recreate ckan-dev`). The start script
+3. **Recreate the container** (`bin/compose up -d --force-recreate ckan-dev`). The start script
    regenerates the schema and syncs the Solr core. In the dev stack the start script lives in the
    `/srv/app` volume, so an image rebuild does not apply it: see *Development stack*. Check the log
-   with `sh bin/compose logs ckan-dev | grep -E "metadata-profiles|solr-schema"`.
-4. **Reindex when the Solr sync reports changes**: `sh bin/ckan search-index rebuild`. Without it,
+   with `bin/compose logs ckan-dev | grep -E "metadata-profiles|solr-schema"`.
+4. **Reindex when the Solr sync reports changes**: `bin/ckan search-index rebuild`. Without it,
    datasets indexed earlier lack the new fields.
 5. **Reharvest the sources.** There is no backfill: a stored dataset keeps the shape it was
    harvested in until its source is harvested again. That matters when a schema was regenerated
    (a field that became a list, a new field, the series link) and is the first thing to try when a
-   field looks empty or wrong after an update. Use `sh bin/ckan harvester job <source id>`, then let
+   field looks empty or wrong after an update. Use `bin/ckan harvester job <source id>`, then let
    the supervisor's consumers finish it. Calling `harvester run` again while a gather is still
    running starts a second gather.
 6. **Give each source its profile** (`metadata_profile`, see *Select a profile per harvest source*).
@@ -373,15 +385,15 @@ deletes only its own. The FAIR Data Point, `dcat_rdf`, S3 and `dcat_json` harves
 After the container starts:
 
 ```
-sh bin/compose logs ckan-dev | grep metadata-profiles       # the generator's lines and the profiles
-sh bin/ckan search-index rebuild                            # then compare the package_search count
+bin/compose logs ckan-dev | grep metadata-profiles       # the generator's lines and the profiles
+bin/ckan search-index rebuild                            # then compare the package_search count
 curl -s "http://localhost:5500/api/3/action/scheming_dataset_schema_show?type=dataset"   # the field list
 curl -s "http://localhost:5500/api/3/action/gdi_metadata_profile_conformance?id=<dataset>"
 ```
 
-Then run a Discovery Service search against it. Harvest with `sh bin/ckan harvester job <source id>`,
-not `harvester run-test`, which races the supervisor's consumers. Run tests on the host, never in the
-`ckan-dev` container (step 8 of *Updating an existing deployment*).
+Then run a Discovery Service search against it. Harvest with `bin/ckan harvester job <source id>`,
+not `harvester run-test`, which races the supervisor's consumers. For the tests, see step 8 of
+*Updating an existing deployment*.
 
 ## Invalid values in a harvested dataset
 
@@ -420,8 +432,9 @@ value.
   source gets every field, and a field that has a value is always shown. A distribution, sample or
   analytics page follows the profile of its dataset. A dataset series is not restricted: its schema is
   the series schema of the first pack that has one, not built from the packs.
-- The export selector `?metadata_profile=<pack>` of ADR 0001 is not implemented: exports use the main
-  profile's chain, or a raw `?profiles=`.
-- Concept and ConceptScheme and the licence type are not covered (see the R8 gap analysis).
+- The export selector `?metadata_profile=<pack>` is not implemented: exports use the main profile's
+  chain, or a raw `?profiles=`.
+- Concept and ConceptScheme and the licence type are not covered (see `healthdcat-ap-r8-gap-analysis.md`
+  in the docs of `ckanext-dcat`).
   `odrl:hasPolicy` of a distribution is kept as the IRI of the policy (`resources[].has_policy`); the
   policy itself is not modelled.
