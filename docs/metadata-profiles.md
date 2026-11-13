@@ -20,7 +20,7 @@ Set these in `.env` (or the environment of the CKAN container) and recreate the 
 |---|---|---|
 | `GDI_METADATA_PROFILES` | Pack names separated by commas and/or whitespace. **The order is the precedence order**: the first pack wins where two packs define a field differently. | unset or empty: `gdi_current` |
 | `GDI_METADATA_MAIN_PROFILE` | The deployment's main profile: used by a harvest source that names none, and as the default RDF chain. Must be one of the enabled packs. | the first enabled pack |
-| `GDI_METADATA_FORM_LANGUAGES` | The languages the edit form offers for the multilingual fields (titles, descriptions, keywords, agent names, ...), in this order, separated by commas and/or whitespace, for datasets, distributions and dataset series. The main language of the plain title and description, and the fallback of a text, is a separate CKAN setting, `CKAN__LOCALE_DEFAULT`; keep it equal to the first form language (the generator warns when it is not). | unset or empty: `en nl` |
+| `GDI_METADATA_FORM_LANGUAGES` | The languages the edit form offers for the multilingual fields (titles, descriptions, keywords, agent names, ...), in this order, separated by commas and/or whitespace, for datasets, distributions and dataset series. The main language of the plain title and description, and the fallback of a text, is a separate CKAN setting, `CKAN__LOCALE_DEFAULT`; keep it equal to the first form language (the generator warns when it is not). | unset or empty: the languages in `CKAN__LOCALES_OFFERED` (the languages the catalogue offers) when that is set, else `en nl` |
 
 ```
 GDI_METADATA_PROFILES=gdi_current                    # the existing model (the default)
@@ -293,8 +293,10 @@ The Solr core is created once from the image and lives in a volume, so rebuildin
 update an existing core. At every start the start scripts run `solr_schema sync`: it adds the dataset
 fields of the enabled profiles to the core as explicit fields (multi valued when the field is a list)
 and applies changes of `solr/schema.xml` through the Solr Schema API.
-The sync never deletes a field and a failure does not stop CKAN (see the `[solr-schema]` lines of the
-container log). After it reports changes, run `sh bin/ckan search-index rebuild` so that datasets indexed
+It reads every dataset schema CKAN is configured with (`scheming.dataset_schemas`: the generated dataset
+schema and the series schema), and removes the explicit fields that none of them and `solr/schema.xml` describe any
+more (for example those of a field that a profile no longer has). `--keep-leftovers` leaves them in place. A
+failure does not stop CKAN (see the `[solr-schema]` lines of the container log). After it reports changes, run `sh bin/ckan search-index rebuild` so that datasets indexed
 earlier get the new fields. Preview with `--dry-run`; details in
 `src/ckanext-gdi-userportal/ckanext/gdi_userportal/profile_packs/README.md`.
 

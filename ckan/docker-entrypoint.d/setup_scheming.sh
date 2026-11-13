@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-# Update the config file with each extension config-options.
+# Set the ckanext-scheming and ckanext-dcat options that do not depend on the metadata profiles.
 # scheming.dataset_schemas, scheming.presets and ckanext.dcat.rdf.profiles are set earlier by
 # the metadata profile generator (see start_ckan.sh), because prerun.py already needs them.
 echo "[ckanext-scheming] Setting up config-options"
