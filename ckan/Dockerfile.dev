@@ -7,7 +7,7 @@
 FROM ckan/ckan-dev:2.11.5
 
 USER root
-RUN chown -R ckan:ckan-sys ${APP_DIR}
+RUN chown -R ckan:ckan-sys ${APP_DIR} /usr/local
 USER ckan
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -52,11 +52,14 @@ RUN set -eux; \
 # Install cron and supervisor.
 # Upgrade the base image's Debian packages first: ckan-base lags behind Debian security updates.
 # Kernel headers are useless in a container and their fixes ship as new packages that upgrade skips, so remove them.
+# libsqlite3-0 is pinned for CVE-2025-6965: remove the pin once the ckan base image ships the fix
+# (https://github.com/ckan/ckan-docker/issues/231).
 RUN apt-get update && apt-get upgrade -y \
     && apt-get purge -y --auto-remove linux-headers-amd64 \
     && apt-get install -y --no-install-recommends \
     cron \
     supervisor \
+    libsqlite3-0=3.40.1-2+deb12u2 \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/log/ckan/std /var/log/supervisor /etc/supervisor/conf.d \
     && chown -R ckan:ckan-sys /var/log/ckan /var/log/supervisor /etc/supervisor/conf.d
@@ -71,11 +74,6 @@ COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
 COPY --chown=ckan-sys:ckan-sys setup/prerun.py ${APP_DIR}
 COPY --chown=ckan-sys:ckan-sys setup/start_ckan_development.sh ${APP_DIR}
-
-#CVE-2025-6965 (wait for ckan base to be updated: https://github.com/ckan/ckan-docker/issues/231)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends libsqlite3-0=3.40.1-2+deb12u2 \
-    && rm -rf /var/lib/apt/lists/*
 
 USER ckan
 

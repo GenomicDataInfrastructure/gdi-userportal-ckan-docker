@@ -4,16 +4,23 @@
 
 name: Run Tests
 
-on: push
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
 
 permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
