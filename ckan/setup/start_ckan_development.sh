@@ -47,6 +47,16 @@ then
     /bin/bash "/docker-entrypoint.d/00_install_local_extensions.sh"
 fi
 
+# Same generator step as start_ckan.sh; it must run before prerun.py.
+echo "[metadata-profiles] Generating the dataset schema"
+if ! METADATA_PROFILE_CONFIG=$(PYTHONUSERBASE="${APP_DIR}/.local" python3 -m ckanext.gdi_userportal.profile_packs.generator --output-dir "${APP_DIR}/generated")
+then
+    echo "[metadata-profiles] failed...not starting CKAN."
+    exit 1
+fi
+mapfile -t METADATA_PROFILE_OPTIONS <<< "$METADATA_PROFILE_CONFIG"
+ckan config-tool $CKAN_INI -s app:main "${METADATA_PROFILE_OPTIONS[@]}"
+
 # Run the prerun script to init CKAN and create the default admin user.
 # It runs as root, so point it at the ckan user's site-packages, where the image installs the extensions.
 PYTHONUSERBASE="${APP_DIR}/.local" python3 prerun.py

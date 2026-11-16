@@ -88,6 +88,13 @@ Shut down and restart the whole ckan-dev container (use bin/compose up -d instea
 ckan -c ckan.ini search-index rebuild
 ```
 
+### 3.5. Metadata profiles
+
+One deployment can load the existing metadata model (`gdi_current`), HealthDCAT-AP R8
+(`healthdcat_r8`) or both, chosen at container start with `GDI_METADATA_PROFILES`. Select, add,
+remove and roll back a profile: [docs/metadata-profiles.md](docs/metadata-profiles.md). Already
+running the stack: [Updating an existing deployment](docs/metadata-profiles.md#updating-an-existing-deployment).
+
 ## 4. Accessing the running instance
 
 The ckan instance runs on port defined in CKAN_PORT_HOST (5500). Access it at http://localhost:5500.  
