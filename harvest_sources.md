@@ -4,6 +4,17 @@ SPDX-FileContributor: PNED G.I.E.
 
 SPDX-License-Identifier: AGPL-3.0-only
 -->
+
+List of harvest sources: one record per source, with four lines in this order:
+
+1. the URL of the source;
+2. the name of the organization that publishes it;
+3. the type of the source: `FAIR` for a FAIR Data Point, `DCAT RDF` for an RDF catalogue;
+4. the source configuration as JSON. `profile` names the RDF profile chain and `rdf_format` the
+   serialization; `metadata_profile` selects a metadata profile (see `docs/metadata-profiles.md`).
+
+Records are separated by two blank lines. No script or document in this repository reads this file.
+
 https://fdp.gdi.biodata.pt
 IST
 FAIR
