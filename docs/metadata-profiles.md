@@ -424,6 +424,6 @@ value.
   the series schema of the first pack that has one, not built from the packs.
 - The export selector `?metadata_profile=<pack>` of ADR 0001 is not implemented: exports use the main
   profile's chain, or a raw `?profiles=`.
-- Concept and ConceptScheme and the licence type are not covered (see the R8 gap analysis).
+- Concept and ConceptScheme and the licence type are not covered.
   `odrl:hasPolicy` of a distribution is kept as the IRI of the policy (`resources[].has_policy`); the
   policy itself is not modelled.
